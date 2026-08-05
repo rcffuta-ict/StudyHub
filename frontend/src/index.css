@@ -27,6 +27,14 @@
 }
 
 @layer utilities {
+  .font-heading {
+    font-family: 'Roboto', 'Plus Jakarta Sans', sans-serif !important;
+  }
+  
+  .font-body {
+    font-family: 'Plus Jakarta Sans', 'Inter', sans-serif !important;
+  }
+
   .btn-purple {
     background-color: #4B2E83;
   }
