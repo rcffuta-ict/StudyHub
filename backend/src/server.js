@@ -16,6 +16,7 @@ import courseAdminRoutes from './routes/courseAdminRoutes.js'
 import progressRoutes from './routes/progressRoutes.js'
 import aiRoutes from './routes/aiRoutes.js'
 import libraryRoutes from './routes/libraryRoutes.js'
+import contactRoutes from './routes/contactRoutes.js'
 
 // Load environment variables
 dotenv.config()
@@ -64,6 +65,7 @@ app.use('/api/course-admin', courseAdminRoutes)
 app.use('/api/progress', progressRoutes)
 app.use('/api/ai', aiRoutes)
 app.use('/api/library', libraryRoutes)
+app.use('/api/contact', contactRoutes)
 
 // Health check
 app.get('/api/health', (req, res) => {
@@ -82,4 +84,3 @@ if (process.env.NODE_ENV !== 'production' || !process.env.VERCEL) {
 }
 
 export default app
-

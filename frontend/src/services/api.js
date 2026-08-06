@@ -88,6 +88,9 @@ export const adminAPI = {
   createCourse: (data) => api.post('/admin/courses', data),
   generateCourseAccessToken: (courseId) => api.post('/course-admin/generate-token', { courseId }),
   updateAcademicSeason: (season) => api.put('/admin/academic-season', { season }),
+  getContactMessages: () => api.get('/admin/messages'),
+  updateMessageStatus: (id, status) => api.patch(`/admin/messages/${id}/status`, { status }),
+  deleteContactMessage: (id) => api.delete(`/admin/messages/${id}`),
 }
 
 // Course Admin API
@@ -120,5 +123,9 @@ export const libraryAPI = {
   getDownloadUrl: (filename) => `${API_URL}/library/download/${encodeURIComponent(filename)}`,
 }
 
-export default api
+// Contact API
+export const contactAPI = {
+  submitMessage: (data) => api.post('/contact', data),
+}
 
+export default api

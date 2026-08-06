@@ -5,6 +5,7 @@ import { adminAPI, dashboardAPI } from '../services/api'
 import toast from 'react-hot-toast'
 import AdminLayout from '../components/AdminLayout'
 import LoadingSpinner from '../components/LoadingSpinner'
+import Pagination from '../components/Pagination'
 import { faculties } from '../utils/faculties'
 
 const AdminDashboard = () => {
@@ -17,6 +18,13 @@ const AdminDashboard = () => {
   const [importing, setImporting] = useState(false)
   const [uploading, setUploading] = useState(false)
   const [academicSeason, setAcademicSeason] = useState('second-semester')
+
+  // Contact Messages state
+  const [messages, setMessages] = useState([])
+  const [loadingMessages, setLoadingMessages] = useState(false)
+  const [messageFilter, setMessageFilter] = useState('all')
+  const [msgPage, setMsgPage] = useState(1)
+  const msgPerPage = 4
 
   useEffect(() => {
     const fetchAcademicSeason = async () => {
@@ -47,6 +55,40 @@ const AdminDashboard = () => {
     } catch (error) {
       console.error('Error updating academic season:', error)
       toast.error('Failed to update academic season on server')
+    }
+  }
+
+  // Contact Messages Handlers
+  const fetchMessages = async () => {
+    try {
+      setLoadingMessages(true)
+      const response = await adminAPI.getContactMessages()
+      setMessages(response.data || [])
+    } catch (error) {
+      console.error('Error fetching contact messages:', error)
+    } finally {
+      setLoadingMessages(false)
+    }
+  }
+
+  const handleUpdateMessageStatus = async (id, status) => {
+    try {
+      await adminAPI.updateMessageStatus(id, status)
+      toast.success(`Message marked as ${status}`)
+      fetchMessages()
+    } catch (error) {
+      toast.error('Failed to update message status')
+    }
+  }
+
+  const handleDeleteMessage = async (id) => {
+    if (!window.confirm('Are you sure you want to delete this contact message?')) return
+    try {
+      await adminAPI.deleteContactMessage(id)
+      toast.success('Message deleted')
+      fetchMessages()
+    } catch (error) {
+      toast.error('Failed to delete message')
     }
   }
 
@@ -84,7 +126,6 @@ const AdminDashboard = () => {
   const [showCreateCourse, setShowCreateCourse] = useState(false)
 
   useEffect(() => {
-    // Check if user is admin
     const adminEmail = import.meta.env.VITE_ADMIN_EMAIL || ''
     if (!user || user.email?.toLowerCase() !== adminEmail.toLowerCase()) {
       toast.error('Admin access required')
@@ -93,6 +134,7 @@ const AdminDashboard = () => {
     }
 
     fetchCourses()
+    fetchMessages()
   }, [user, navigate])
 
   const fetchCourses = async () => {
@@ -145,7 +187,6 @@ const AdminDashboard = () => {
         topicTitle: '',
         topicDescription: ''
       })
-      // Refresh course details if viewing that course
       if (selectedCourse === playlistForm.courseId) {
         fetchCourseDetails(playlistForm.courseId)
       }
@@ -174,7 +215,6 @@ const AdminDashboard = () => {
         topicTitle: '',
         topicDescription: ''
       })
-      // Refresh course details if viewing that course
       if (selectedCourse === videoForm.courseId) {
         fetchCourseDetails(videoForm.courseId)
       }
@@ -209,7 +249,6 @@ const AdminDashboard = () => {
         title: '',
         file: null
       })
-      // Refresh course details
       if (selectedCourse) {
         fetchCourseDetails(selectedCourse)
       }
@@ -242,8 +281,7 @@ const AdminDashboard = () => {
     e.preventDefault()
     try {
       setCreatingCourse(true)
-      // Use the regular courses API to create a course
-      const response = await adminAPI.createCourse(newCourseForm)
+      await adminAPI.createCourse(newCourseForm)
       toast.success('Course created successfully!')
       setNewCourseForm({
         title: '',
@@ -253,7 +291,7 @@ const AdminDashboard = () => {
         level: '100',
         units: 3
       })
-      // Refresh courses list
+      setShowCreateCourse(false)
       fetchCourses()
     } catch (error) {
       console.error('Error creating course:', error)
@@ -263,6 +301,12 @@ const AdminDashboard = () => {
     }
   }
 
+  const filteredMessages = messages.filter(m => {
+    if (messageFilter === 'all') return true
+    return m.status === messageFilter
+  })
+
+  const unreadCount = messages.filter(m => m.status === 'unread').length
 
   if (loading) {
     return (
@@ -295,7 +339,129 @@ const AdminDashboard = () => {
           </div>
         </div>
 
-        {/* Manage Courses Section - Moved to Top */}
+        {/* Contact Messages Section */}
+        <div className="mb-6 bg-white rounded-lg shadow-sm p-6 border border-gray-200">
+          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-4 pb-4 border-b border-gray-100">
+            <div>
+              <div className="flex items-center gap-2">
+                <h2 className="text-xl font-bold">Student Contact Messages</h2>
+                {unreadCount > 0 && (
+                  <span className="bg-red-500 text-white text-xs font-bold px-2 py-0.5 rounded-full">
+                    {unreadCount} Unread
+                  </span>
+                )}
+              </div>
+              <p className="text-sm text-gray-500">Inquiries and feedback submitted via the homepage Contact Us form.</p>
+            </div>
+            
+            <div className="flex items-center gap-2">
+              <button
+                onClick={fetchMessages}
+                className="px-3 py-1.5 bg-gray-100 text-gray-700 text-xs font-bold rounded-lg hover:bg-gray-200"
+              >
+                Refresh
+              </button>
+              <div className="flex bg-gray-100 p-1 rounded-lg text-xs font-bold">
+                {['all', 'unread', 'read', 'resolved'].map((f) => (
+                  <button
+                    key={f}
+                    onClick={() => setMessageFilter(f)}
+                    className={`px-2.5 py-1 rounded-md capitalize transition-all ${messageFilter === f ? 'bg-purple-brand text-white shadow-xs' : 'text-gray-600 hover:text-gray-900'}`}
+                  >
+                    {f}
+                  </button>
+                ))}
+              </div>
+            </div>
+          </div>
+
+          {loadingMessages ? (
+            <div className="py-8 text-center text-sm text-gray-500">Loading messages...</div>
+          ) : filteredMessages.length === 0 ? (
+            <div className="py-8 text-center text-sm text-gray-500">
+              No contact messages found ({messageFilter !== 'all' ? `Filtered by: ${messageFilter}` : 'Empty inbox'}).
+            </div>
+          ) : (
+            <div>
+              <div className="space-y-4">
+                {filteredMessages.slice((msgPage - 1) * msgPerPage, msgPage * msgPerPage).map((msg) => (
+                  <div
+                    key={msg._id}
+                    className={`p-4 rounded-xl border transition-all ${
+                      msg.status === 'unread'
+                        ? 'bg-purple-50/50 border-purple-200'
+                        : msg.status === 'resolved'
+                        ? 'bg-emerald-50/40 border-emerald-200'
+                        : 'bg-white border-gray-200'
+                    }`}
+                  >
+                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-2">
+                      <div className="flex items-center gap-2">
+                        <span className="font-extrabold text-sm text-gray-900">{msg.name}</span>
+                        <span className="text-xs text-gray-500 font-mono">({msg.email})</span>
+                        <span
+                          className={`text-[10px] font-bold uppercase px-2 py-0.5 rounded-full ${
+                            msg.status === 'unread'
+                              ? 'bg-purple-100 text-[#4B2E83] border border-purple-200'
+                              : msg.status === 'resolved'
+                              ? 'bg-emerald-100 text-emerald-800 border border-emerald-200'
+                              : 'bg-gray-100 text-gray-600 border border-gray-200'
+                          }`}
+                        >
+                          {msg.status}
+                        </span>
+                      </div>
+                      <span className="text-[11px] text-gray-400 font-medium">
+                        {new Date(msg.createdAt).toLocaleString()}
+                      </span>
+                    </div>
+
+                    <h4 className="text-xs font-bold text-gray-800 mb-1">Subject: {msg.subject}</h4>
+                    <p className="text-xs text-gray-600 leading-relaxed font-medium bg-white/80 p-3 rounded-lg border border-gray-100 mb-3 whitespace-pre-wrap">
+                      {msg.message}
+                    </p>
+
+                    <div className="flex items-center gap-2 pt-1 border-t border-gray-100">
+                      {msg.status === 'unread' && (
+                        <button
+                          onClick={() => handleUpdateMessageStatus(msg._id, 'read')}
+                          className="px-3 py-1 bg-purple-100 text-[#4B2E83] text-xs font-bold rounded-lg hover:bg-purple-200"
+                        >
+                          Mark as Read
+                        </button>
+                      )}
+                      {msg.status !== 'resolved' && (
+                        <button
+                          onClick={() => handleUpdateMessageStatus(msg._id, 'resolved')}
+                          className="px-3 py-1 bg-emerald-100 text-emerald-800 text-xs font-bold rounded-lg hover:bg-emerald-200"
+                        >
+                          Mark as Resolved
+                        </button>
+                      )}
+                      <button
+                        onClick={() => handleDeleteMessage(msg._id)}
+                        className="px-3 py-1 bg-red-100 text-red-700 text-xs font-bold rounded-lg hover:bg-red-200 ml-auto"
+                      >
+                        Delete
+                      </button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+
+              <Pagination
+                currentPage={msgPage}
+                totalPages={Math.ceil(filteredMessages.length / msgPerPage)}
+                onPageChange={setMsgPage}
+                totalItems={filteredMessages.length}
+                itemsPerPage={msgPerPage}
+                className="mt-4"
+              />
+            </div>
+          )}
+        </div>
+
+        {/* Manage Courses Section */}
         <div className="mb-6 bg-white rounded-lg shadow-sm p-6">
           <h2 className="text-xl font-bold mb-4">Manage Courses</h2>
           
@@ -421,143 +587,139 @@ const AdminDashboard = () => {
           {showCreateCourse && (
             <div className="px-6 pb-6">
               <form onSubmit={handleCreateCourse} className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Course Title *
-              </label>
-              <input
-                type="text"
-                value={newCourseForm.title}
-                onChange={(e) => setNewCourseForm({ ...newCourseForm, title: e.target.value })}
-                required
-                placeholder="e.g., Introduction to Mathematics (MTH 101)"
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500"
-              />
-            </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Course Title *
+                  </label>
+                  <input
+                    type="text"
+                    value={newCourseForm.title}
+                    onChange={(e) => setNewCourseForm({ ...newCourseForm, title: e.target.value })}
+                    required
+                    placeholder="e.g., Introduction to Mathematics (MTH 101)"
+                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500"
+                  />
+                </div>
 
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Level *
-              </label>
-              <select
-                value={newCourseForm.level}
-                onChange={(e) => setNewCourseForm({ ...newCourseForm, level: e.target.value })}
-                required
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 bg-white"
-              >
-                <option value="100">100 Level</option>
-                <option value="200">200 Level</option>
-                <option value="300">300 Level</option>
-                <option value="400">400 Level</option>
-                <option value="500">500 Level</option>
-              </select>
-            </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Level *
+                  </label>
+                  <select
+                    value={newCourseForm.level}
+                    onChange={(e) => setNewCourseForm({ ...newCourseForm, level: e.target.value })}
+                    required
+                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 bg-white"
+                  >
+                    <option value="100">100 Level</option>
+                    <option value="200">200 Level</option>
+                    <option value="300">300 Level</option>
+                    <option value="400">400 Level</option>
+                    <option value="500">500 Level</option>
+                  </select>
+                </div>
 
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Faculty *
-              </label>
-              <select
-                value={newCourseForm.faculty}
-                onChange={(e) => setNewCourseForm({ ...newCourseForm, faculty: e.target.value, department: '' })}
-                required
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 bg-white"
-              >
-                <option value="">Select Faculty</option>
-                {Object.keys(faculties).map((faculty) => (
-                  <option key={faculty} value={faculty}>
-                    {faculty}
-                  </option>
-                ))}
-              </select>
-            </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Faculty *
+                  </label>
+                  <select
+                    value={newCourseForm.faculty}
+                    onChange={(e) => setNewCourseForm({ ...newCourseForm, faculty: e.target.value, department: '' })}
+                    required
+                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 bg-white"
+                  >
+                    <option value="">Select Faculty</option>
+                    {faculties.map((fac) => (
+                      <option key={fac.name} value={fac.name}>{fac.name}</option>
+                    ))}
+                  </select>
+                </div>
 
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Department *
-              </label>
-              <select
-                value={newCourseForm.department}
-                onChange={(e) => setNewCourseForm({ ...newCourseForm, department: e.target.value })}
-                required
-                disabled={!newCourseForm.faculty}
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 bg-white disabled:bg-gray-100"
-              >
-                <option value="">Select Department</option>
-                {newCourseForm.faculty && faculties[newCourseForm.faculty]?.map((dept) => (
-                  <option key={dept} value={dept}>
-                    {dept}
-                  </option>
-                ))}
-              </select>
-            </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Department *
+                  </label>
+                  <select
+                    value={newCourseForm.department}
+                    onChange={(e) => setNewCourseForm({ ...newCourseForm, department: e.target.value })}
+                    required
+                    disabled={!newCourseForm.faculty}
+                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 bg-white disabled:bg-gray-100"
+                  >
+                    <option value="">Select Department</option>
+                    {faculties.find((f) => f.name === newCourseForm.faculty)?.departments.map((dept) => (
+                      <option key={dept} value={dept}>{dept}</option>
+                    ))}
+                  </select>
+                </div>
 
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Credit Units
-              </label>
-              <input
-                type="number"
-                value={newCourseForm.units}
-                onChange={(e) => setNewCourseForm({ ...newCourseForm, units: parseInt(e.target.value) || 3 })}
-                min="1"
-                max="6"
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500"
-              />
-            </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Units *
+                  </label>
+                  <input
+                    type="number"
+                    min="1"
+                    max="6"
+                    value={newCourseForm.units}
+                    onChange={(e) => setNewCourseForm({ ...newCourseForm, units: Number(e.target.value) })}
+                    required
+                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500"
+                  />
+                </div>
 
-            <div className="md:col-span-2">
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Description
-              </label>
-              <textarea
-                value={newCourseForm.description}
-                onChange={(e) => setNewCourseForm({ ...newCourseForm, description: e.target.value })}
-                placeholder="Optional course description..."
-                rows="2"
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500"
-              />
-            </div>
+                <div className="md:col-span-2">
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Description
+                  </label>
+                  <textarea
+                    value={newCourseForm.description}
+                    onChange={(e) => setNewCourseForm({ ...newCourseForm, description: e.target.value })}
+                    rows="3"
+                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500"
+                  />
+                </div>
 
-            <div className="md:col-span-2">
-              <button
-                type="submit"
-                disabled={creatingCourse}
-                className="px-6 py-2 btn-purple text-white rounded-lg disabled:opacity-50 disabled:cursor-not-allowed"
-              >
-                {creatingCourse ? 'Creating...' : 'Create Course'}
-              </button>
-            </div>
+                <div className="md:col-span-2 flex justify-end gap-2">
+                  <button
+                    type="button"
+                    onClick={() => setShowCreateCourse(false)}
+                    className="px-4 py-2 text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    type="submit"
+                    disabled={creatingCourse}
+                    className="px-4 py-2 bg-purple-brand text-white rounded-lg hover:bg-purple-dark disabled:opacity-50"
+                  >
+                    {creatingCourse ? 'Creating...' : 'Create Course'}
+                  </button>
+                </div>
               </form>
             </div>
           )}
         </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          {/* Import YouTube Content Section */}
+        {/* Content Management Cards */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          {/* Import YouTube Content */}
           <div className="bg-white rounded-lg shadow-sm p-6">
             <div className="flex items-center justify-between mb-4">
               <h2 className="text-xl font-bold">Import YouTube Content</h2>
-              <div className="flex gap-2 bg-gray-100 rounded-lg p-1">
+              <div className="flex bg-gray-100 p-1 rounded-lg text-xs font-semibold">
                 <button
                   type="button"
                   onClick={() => setImportType('playlist')}
-                  className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${
-                    importType === 'playlist'
-                      ? 'bg-purple-brand text-white'
-                      : 'text-gray-600 hover:text-gray-900'
-                  }`}
+                  className={`px-3 py-1 rounded-md transition-all ${importType === 'playlist' ? 'bg-purple-brand text-white shadow-xs' : 'text-gray-600 hover:text-gray-900'}`}
                 >
                   Playlist
                 </button>
                 <button
                   type="button"
                   onClick={() => setImportType('video')}
-                  className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${
-                    importType === 'video'
-                      ? 'bg-purple-brand text-white'
-                      : 'text-gray-600 hover:text-gray-900'
-                  }`}
+                  className={`px-3 py-1 rounded-md transition-all ${importType === 'video' ? 'bg-purple-brand text-white shadow-xs' : 'text-gray-600 hover:text-gray-900'}`}
                 >
                   Single Video
                 </button>
@@ -566,154 +728,144 @@ const AdminDashboard = () => {
 
             {importType === 'playlist' ? (
               <form onSubmit={handleImportPlaylist} className="space-y-4">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Select Course *
-                </label>
-                <select
-                  value={playlistForm.courseId}
-                  onChange={(e) => setPlaylistForm({ ...playlistForm, courseId: e.target.value })}
-                  required
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 bg-white"
-                  disabled={courses.length === 0}
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Select Course *
+                  </label>
+                  <select
+                    value={playlistForm.courseId}
+                    onChange={(e) => setPlaylistForm({ ...playlistForm, courseId: e.target.value })}
+                    required
+                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500"
+                  >
+                    <option value="">Select a course</option>
+                    {courses.map((course) => (
+                      <option key={course._id} value={course._id}>
+                        {course.title} ({course.level} Level)
+                      </option>
+                    ))}
+                  </select>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Topic Title *
+                  </label>
+                  <input
+                    type="text"
+                    value={playlistForm.topicTitle}
+                    onChange={(e) => setPlaylistForm({ ...playlistForm, topicTitle: e.target.value })}
+                    required
+                    placeholder="e.g., Differential Calculus"
+                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    YouTube Playlist URL *
+                  </label>
+                  <input
+                    type="url"
+                    value={playlistForm.playlistUrl}
+                    onChange={(e) => setPlaylistForm({ ...playlistForm, playlistUrl: e.target.value })}
+                    required
+                    placeholder="https://www.youtube.com/playlist?list=..."
+                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Topic Description
+                  </label>
+                  <textarea
+                    value={playlistForm.topicDescription}
+                    onChange={(e) => setPlaylistForm({ ...playlistForm, topicDescription: e.target.value })}
+                    placeholder="Optional description..."
+                    rows="3"
+                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500"
+                  />
+                </div>
+
+                <button
+                  type="submit"
+                  disabled={importing}
+                  className="w-full py-2 btn-purple text-white rounded-lg disabled:opacity-50 disabled:cursor-not-allowed"
                 >
-                  <option value="">{courses.length === 0 ? 'No courses available' : 'Select a course'}</option>
-                  {courses.map((course) => (
-                    <option key={course._id} value={course._id}>
-                      {course.title} ({course.level} Level)
-                    </option>
-                  ))}
-                </select>
-                {courses.length === 0 && (
-                  <p className="text-xs text-red-500 mt-1">Please create courses first before importing playlists</p>
-                )}
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  YouTube Playlist URL *
-                </label>
-                <input
-                  type="url"
-                  value={playlistForm.playlistUrl}
-                  onChange={(e) => setPlaylistForm({ ...playlistForm, playlistUrl: e.target.value })}
-                  required
-                  placeholder="https://www.youtube.com/playlist?list=..."
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500"
-                />
-                <p className="text-xs text-gray-500 mt-1">Paste a YouTube playlist URL</p>
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Topic Title *
-                </label>
-                <input
-                  type="text"
-                  value={playlistForm.topicTitle}
-                  onChange={(e) => setPlaylistForm({ ...playlistForm, topicTitle: e.target.value })}
-                  required
-                  placeholder="e.g., Introduction to Algebra"
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500"
-                />
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Topic Description
-                </label>
-                <textarea
-                  value={playlistForm.topicDescription}
-                  onChange={(e) => setPlaylistForm({ ...playlistForm, topicDescription: e.target.value })}
-                  placeholder="Optional description..."
-                  rows="3"
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500"
-                />
-              </div>
-
-              <button
-                type="submit"
-                disabled={importing}
-                className="w-full py-2 btn-purple text-white rounded-lg disabled:opacity-50 disabled:cursor-not-allowed"
-              >
-                {importing ? 'Importing...' : 'Import Playlist'}
-              </button>
-            </form>
+                  {importing ? 'Importing...' : 'Import Playlist'}
+                </button>
+              </form>
             ) : (
               <form onSubmit={handleImportVideo} className="space-y-4">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Select Course *
-                </label>
-                <select
-                  value={videoForm.courseId}
-                  onChange={(e) => setVideoForm({ ...videoForm, courseId: e.target.value })}
-                  required
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 bg-white"
-                  disabled={courses.length === 0}
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Select Course *
+                  </label>
+                  <select
+                    value={videoForm.courseId}
+                    onChange={(e) => setVideoForm({ ...videoForm, courseId: e.target.value })}
+                    required
+                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500"
+                  >
+                    <option value="">Select a course</option>
+                    {courses.map((course) => (
+                      <option key={course._id} value={course._id}>
+                        {course.title} ({course.level} Level)
+                      </option>
+                    ))}
+                  </select>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Topic Title *
+                  </label>
+                  <input
+                    type="text"
+                    value={videoForm.topicTitle}
+                    onChange={(e) => setVideoForm({ ...videoForm, topicTitle: e.target.value })}
+                    required
+                    placeholder="e.g., Introduction to Derivatives"
+                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    YouTube Video URL *
+                  </label>
+                  <input
+                    type="url"
+                    value={videoForm.videoUrl}
+                    onChange={(e) => setVideoForm({ ...videoForm, videoUrl: e.target.value })}
+                    required
+                    placeholder="https://www.youtube.com/watch?v=..."
+                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Topic Description
+                  </label>
+                  <textarea
+                    value={videoForm.topicDescription}
+                    onChange={(e) => setVideoForm({ ...videoForm, topicDescription: e.target.value })}
+                    placeholder="Optional description..."
+                    rows="3"
+                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500"
+                  />
+                </div>
+
+                <button
+                  type="submit"
+                  disabled={importing}
+                  className="w-full py-2 btn-purple text-white rounded-lg disabled:opacity-50 disabled:cursor-not-allowed"
                 >
-                  <option value="">{courses.length === 0 ? 'No courses available' : 'Select a course'}</option>
-                  {courses.map((course) => (
-                    <option key={course._id} value={course._id}>
-                      {course.title} ({course.level} Level)
-                    </option>
-                  ))}
-                </select>
-                {courses.length === 0 && (
-                  <p className="text-xs text-red-500 mt-1">Please create courses first before importing videos</p>
-                )}
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  YouTube Video URL *
-                </label>
-                <input
-                  type="url"
-                  value={videoForm.videoUrl}
-                  onChange={(e) => setVideoForm({ ...videoForm, videoUrl: e.target.value })}
-                  required
-                  placeholder="https://www.youtube.com/watch?v=... or https://youtu.be/..."
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500"
-                />
-                <p className="text-xs text-gray-500 mt-1">Paste a YouTube video URL</p>
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Topic Title *
-                </label>
-                <input
-                  type="text"
-                  value={videoForm.topicTitle}
-                  onChange={(e) => setVideoForm({ ...videoForm, topicTitle: e.target.value })}
-                  required
-                  placeholder="e.g., Introduction to Algebra"
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500"
-                />
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Topic Description
-                </label>
-                <textarea
-                  value={videoForm.topicDescription}
-                  onChange={(e) => setVideoForm({ ...videoForm, topicDescription: e.target.value })}
-                  placeholder="Optional description..."
-                  rows="3"
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500"
-                />
-              </div>
-
-              <button
-                type="submit"
-                disabled={importing}
-                className="w-full py-2 btn-purple text-white rounded-lg disabled:opacity-50 disabled:cursor-not-allowed"
-              >
-                {importing ? 'Importing...' : 'Import Video'}
-              </button>
-            </form>
+                  {importing ? 'Importing...' : 'Import Video'}
+                </button>
+              </form>
             )}
           </div>
 
@@ -802,4 +954,3 @@ const AdminDashboard = () => {
 }
 
 export default AdminDashboard
-

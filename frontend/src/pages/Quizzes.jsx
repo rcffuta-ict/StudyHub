@@ -3,6 +3,7 @@ import Layout from '../components/Layout'
 import { useAuth } from '../context/AuthContext'
 import GuestRestrictionModal from '../components/GuestRestrictionModal'
 import AskStudyBuddy from '../components/AskStudyBuddy'
+import Pagination from '../components/Pagination'
 import { academicQuestions, techQuestions } from '../utils/quizQuestions'
 import toast from 'react-hot-toast'
 
@@ -16,6 +17,8 @@ const Quizzes = () => {
   const [matricNo, setMatricNo] = useState('')
   const [selectedCourse, setSelectedCourse] = useState('')
   const [cbtHistory, setCbtHistory] = useState([])
+  const [historyPage, setHistoryPage] = useState(1)
+  const historyPerPage = 5
 
   // 2. Exam States
   const [questions, setQuestions] = useState([])
@@ -78,7 +81,6 @@ const Quizzes = () => {
     localStorage.setItem(key, JSON.stringify(updated))
     setCbtHistory(updated)
 
-    // Increment guest test counter if guest
     if (user?.isGuest) {
       const guestCounter = parseInt(localStorage.getItem('studyhub_guest_cbt_count') || '0')
       localStorage.setItem('studyhub_guest_cbt_count', (guestCounter + 1).toString())
@@ -89,7 +91,7 @@ const Quizzes = () => {
   useEffect(() => {
     if (!examActive || timeLeft <= 0) {
       if (examActive && timeLeft === 0) {
-        handleExamSubmit(true) // Auto-submit when timer hits 0
+        handleExamSubmit(true)
       }
       return
     }
@@ -101,73 +103,46 @@ const Quizzes = () => {
     return () => clearInterval(timer)
   }, [examActive, timeLeft])
 
-  const formatTimer = (seconds) => {
-    const mins = Math.floor(seconds / 60)
-    const secs = seconds % 60
-    return `${String(mins).padStart(2, '0')}:${String(secs).padStart(2, '0')}`
-  }
-
-  // -------------------------------------------------------------
-  // SETUP ACTION
-  // -------------------------------------------------------------
   const handleStartCbt = (e) => {
     e.preventDefault()
 
-    if (!matricNo.trim()) {
-      toast.error('Please enter your Matriculation or UTME Reg Number')
-      return
-    }
     if (!selectedCourse) {
-      toast.error('Please select a course to start')
+      toast.error('Please select an examination course')
       return
     }
 
-    // Check guest restriction: Guest is allowed to take exactly 1 test
+    // Guest Restriction Check
     if (user?.isGuest) {
-      const guestCounter = parseInt(localStorage.getItem('studyhub_guest_cbt_count') || '0')
-      if (guestCounter >= 1) {
-        setRestrictAction('take another CBT practice exam')
+      const guestCount = parseInt(localStorage.getItem('studyhub_guest_cbt_count') || '0')
+      if (guestCount >= 1) {
+        setRestrictAction('take unlimited CBT mock exams')
         setIsRestrictModalOpen(true)
         return
       }
     }
 
-    // Load appropriate questions
-    let selectedQs = []
+    let sourcePool = academicQuestions
     if (selectedCourse === 'tech-news') {
-      const dept = user?.department || 'Computer Science'
-      if (techQuestions[dept]) {
-        selectedQs = [...techQuestions[dept]]
-      } else {
-        selectedQs = [...techQuestions['Computer Science']]
-      }
-    } else {
-      selectedQs = [...academicQuestions[selectedCourse]]
+      sourcePool = techQuestions
     }
 
-    if (selectedQs.length === 0) {
-      toast.error('Questions are currently unavailable for this category')
-      return
-    }
-
-    setQuestions(selectedQs)
+    // Shuffle and pick 10 questions for quick simulation
+    const shuffled = [...sourcePool].sort(() => 0.5 - Math.random()).slice(0, 10)
+    
+    setQuestions(shuffled)
     setAnswers({})
     setCurrentQuestionIdx(0)
-    setTimeLeft(selectedQs.length * 60) // 1 minute per question
+    setTimeLeft(10 * 60) // 10 Minutes default
     setStartTime(Date.now())
     setExamActive(true)
     setViewState('exam')
-    toast.success('Exam session started. Good luck!')
+    toast.success('Exam session initialized! Timer started.')
   }
 
-  // -------------------------------------------------------------
-  // EXAM NAV & ACTIONS
-  // -------------------------------------------------------------
-  const handleOptionSelect = (optionIdx) => {
-    const activeQ = questions[currentQuestionIdx]
+  const handleSelectOption = (questionId, optionIdx) => {
     setAnswers({
       ...answers,
-      [activeQ.id]: optionIdx
+      [questionId]: optionIdx
     })
   }
 
@@ -175,13 +150,12 @@ const Quizzes = () => {
     setExamActive(false)
     setShowSubmitConfirm(false)
 
-    const currentStartTime = startTimeRef.current
+    const currentStartTime = startTimeRef.current || Date.now()
     const currentQuestions = questionsRef.current
     const currentAnswers = answersRef.current
     const currentSelectedCourse = selectedCourseRef.current
     const currentUser = userRef.current
 
-    // Calculate elapsed time
     const end = Date.now()
     const elapsedSeconds = Math.floor((end - currentStartTime) / 1000)
     const elapsedMins = Math.floor(elapsedSeconds / 60)
@@ -189,7 +163,6 @@ const Quizzes = () => {
     const timeSpent = `${elapsedMins}m ${remainingSecs}s`
     setElapsedTimeStr(timeSpent)
 
-    // Grade exam
     let correctCount = 0
     currentQuestions.forEach(q => {
       if (currentAnswers[q.id] === q.correctAnswer) {
@@ -201,7 +174,6 @@ const Quizzes = () => {
     setScore(correctCount)
     setPercentage(pct)
 
-    // Save to history
     saveCbtAttempt({
       id: Date.now(),
       course: currentSelectedCourse === 'tech-news' ? `Tech Insights (${currentUser?.department || 'Tech'})` : currentSelectedCourse,
@@ -219,7 +191,6 @@ const Quizzes = () => {
     }
   }
 
-  // Ask AI about correction question
   const handleAskBuddyAboutQuestion = (q, selectedOptIdx) => {
     let contextStr = `Question: "${q.question}"\n`
     q.options.forEach((opt, idx) => {
@@ -234,6 +205,18 @@ const Quizzes = () => {
     setAiInitialQuery(contextStr)
     setIsAiOpen(true)
   }
+
+  const formatTime = (secs) => {
+    const m = Math.floor(secs / 60)
+    const s = secs % 60
+    return `${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`
+  }
+
+  const totalHistoryPages = Math.ceil(cbtHistory.length / historyPerPage)
+  const paginatedHistory = cbtHistory.slice(
+    (historyPage - 1) * historyPerPage,
+    historyPage * historyPerPage
+  )
 
   return (
     <Layout>
@@ -258,52 +241,65 @@ const Quizzes = () => {
                   <p className="mt-1">Please enter your matriculation details and select a course below to simulate FUTA's CBT environment. Guest users are limited to 1 trial exam.</p>
                 </div>
 
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  <div>
-                    <label className="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-1">Registration/Matric Number</label>
-                    <input
-                      type="text"
-                      value={matricNo}
-                      onChange={(e) => setMatricNo(e.target.value.toUpperCase())}
-                      placeholder="e.g. CSC/21/1054"
-                      className="w-full px-3 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent text-sm font-semibold uppercase bg-white"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-1">Course Code / Subject</label>
-                    <select
-                      value={selectedCourse}
-                      onChange={(e) => setSelectedCourse(e.target.value)}
-                      className="w-full px-3 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent text-sm font-semibold bg-white"
-                    >
-                      <option value="">-- Choose Subject --</option>
-                      <option value="MTH 101">MTH 101 - General Mathematics I</option>
-                      <option value="PHY 101">PHY 101 - General Physics I</option>
-                      <option value="CHM 101">CHM 101 - General Chemistry I</option>
-                      <option value="CSC 201">CSC 201 - Intro to Programming</option>
-                      <option value="GST 111">GST 111 - Communication in English</option>
-                      <option value="tech-news">Extracurricular Tech Insights ({user?.department || 'Tech'})</option>
-                    </select>
-                  </div>
+                <div>
+                  <label className="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-1">Matriculation Number / Username</label>
+                  <input
+                    type="text"
+                    placeholder="e.g. CPT/19/4021"
+                    value={matricNo}
+                    onChange={(e) => setMatricNo(e.target.value)}
+                    className="w-full px-4 py-2.5 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 font-mono"
+                  />
+                  <p className="text-[11px] text-gray-400 mt-1">Optional for practice mode. Stored only in local session memory.</p>
                 </div>
 
-                <button
-                  type="submit"
-                  className="w-full py-2.5 bg-purple-brand text-white font-extrabold text-sm tracking-wider hover:bg-purple-700 transition-colors border border-purple-800 rounded uppercase shadow-sm"
-                >
-                  Enter Exam Hall (Login)
-                </button>
+                <div>
+                  <label className="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-1">Select Examination Course *</label>
+                  <select
+                    value={selectedCourse}
+                    onChange={(e) => setSelectedCourse(e.target.value)}
+                    className="w-full px-4 py-2.5 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 bg-white font-semibold"
+                    required
+                  >
+                    <option value="">-- Choose Course for Practice --</option>
+                    <option value="MTH 101 – Calculus & Algebra">MTH 101 – Calculus & Algebra (100L)</option>
+                    <option value="PHY 101 – General Physics I">PHY 101 – General Physics I (100L)</option>
+                    <option value="CHM 101 – General Chemistry">CHM 101 – General Chemistry (100L)</option>
+                    <option value="GST 111 – Use of English">GST 111 – Use of English (100L)</option>
+                    <option value="EEE 201 – Circuit Theory I">EEE 201 – Circuit Theory I (200L)</option>
+                    <option value="CSC 201 – Programming Fundamentals">CSC 201 – Programming Fundamentals (200L)</option>
+                    <option value="tech-news">Special: Technology & CS General Knowledge</option>
+                  </select>
+                </div>
+
+                <div className="pt-2 flex flex-col sm:flex-row items-center justify-between gap-4">
+                  <div className="text-xs text-gray-500 font-medium">
+                    <span>Format: </span>
+                    <span className="font-bold text-gray-800">10 Questions • 10 Minutes</span>
+                  </div>
+
+                  <button
+                    type="submit"
+                    className="w-full sm:w-auto px-6 py-3 btn-purple text-white font-extrabold text-sm rounded-xl hover:bg-purple-700 transition-all shadow-md active:scale-95"
+                  >
+                    Launch Examination →
+                  </button>
+                </div>
               </form>
             </div>
 
-            {/* Guidelines Panel */}
-            <div className="lg:col-span-1 bg-white rounded-xl shadow-sm border border-gray-200 p-6 flex flex-col justify-between">
+            {/* Instructions Sidebar */}
+            <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6 flex flex-col justify-between">
               <div>
-                <h3 className="text-lg font-extrabold text-gray-900 border-b border-gray-100 pb-2 mb-4">CBT Guidelines</h3>
-                <ul className="space-y-3 text-sm text-gray-600">
+                <h3 className="font-bold text-gray-900 mb-3 text-base">CBT Rules & Tips</h3>
+                <ul className="text-xs text-gray-600 space-y-2.5 leading-relaxed">
                   <li className="flex items-start gap-2">
                     <span className="text-purple-brand font-bold">✓</span>
-                    <span>Questions are multiple choice with four options (A, B, C, D).</span>
+                    <span>All questions carry equal marks. No negative marking applied.</span>
+                  </li>
+                  <li className="flex items-start gap-2">
+                    <span className="text-purple-brand font-bold">✓</span>
+                    <span>You can navigate back and forth between questions before submitting.</span>
                   </li>
                   <li className="flex items-start gap-2">
                     <span className="text-purple-brand font-bold">✓</span>
@@ -326,33 +322,44 @@ const Quizzes = () => {
             <div className="lg:col-span-3 bg-white rounded-xl shadow-sm border border-gray-100 p-6 mt-4">
               <h3 className="text-lg font-bold text-gray-900 mb-4">CBT Exam Attendance & Score Log</h3>
               {cbtHistory.length > 0 ? (
-                <div className="overflow-x-auto">
-                  <table className="w-full text-left text-sm border-collapse">
-                    <thead>
-                      <tr className="bg-gray-50 text-gray-600 font-semibold border-b border-gray-200">
-                        <th className="py-2.5 px-4">Exam/Course</th>
-                        <th className="py-2.5 px-4">Score</th>
-                        <th className="py-2.5 px-4">Percentage</th>
-                        <th className="py-2.5 px-4">Time Spent</th>
-                        <th className="py-2.5 px-4">Date Completed</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {cbtHistory.map((item) => (
-                        <tr key={item.id} className="border-b border-gray-100 hover:bg-gray-50 transition-colors">
-                          <td className="py-2.5 px-4 font-semibold text-gray-800">{item.course}</td>
-                          <td className="py-2.5 px-4 font-bold text-purple-brand">{item.score}</td>
-                          <td className="py-2.5 px-4">
-                            <span className={`px-2 py-0.5 rounded text-xs font-bold ${item.percentage >= 50 ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}`}>
-                              {item.percentage}%
-                            </span>
-                          </td>
-                          <td className="py-2.5 px-4 text-gray-600">{item.timeSpent}</td>
-                          <td className="py-2.5 px-4 text-gray-500">{item.date}</td>
+                <div>
+                  <div className="overflow-x-auto">
+                    <table className="w-full text-left text-sm border-collapse">
+                      <thead>
+                        <tr className="bg-gray-50 text-gray-600 font-semibold border-b border-gray-200">
+                          <th className="py-2.5 px-4">Exam/Course</th>
+                          <th className="py-2.5 px-4">Score</th>
+                          <th className="py-2.5 px-4">Percentage</th>
+                          <th className="py-2.5 px-4">Time Spent</th>
+                          <th className="py-2.5 px-4">Date Completed</th>
                         </tr>
-                      ))}
-                    </tbody>
-                  </table>
+                      </thead>
+                      <tbody>
+                        {paginatedHistory.map((item) => (
+                          <tr key={item.id} className="border-b border-gray-100 hover:bg-gray-50 transition-colors">
+                            <td className="py-2.5 px-4 font-semibold text-gray-800">{item.course}</td>
+                            <td className="py-2.5 px-4 font-bold text-purple-brand">{item.score}</td>
+                            <td className="py-2.5 px-4">
+                              <span className={`px-2 py-0.5 rounded text-xs font-bold ${item.percentage >= 50 ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}`}>
+                                {item.percentage}%
+                              </span>
+                            </td>
+                            <td className="py-2.5 px-4 text-gray-600">{item.timeSpent}</td>
+                            <td className="py-2.5 px-4 text-gray-500">{item.date}</td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+
+                  <Pagination
+                    currentPage={historyPage}
+                    totalPages={totalHistoryPages}
+                    onPageChange={setHistoryPage}
+                    totalItems={cbtHistory.length}
+                    itemsPerPage={historyPerPage}
+                    className="mt-4"
+                  />
                 </div>
               ) : (
                 <div className="text-center py-6 text-gray-400 text-sm">
@@ -368,96 +375,74 @@ const Quizzes = () => {
           <div className="flex flex-col gap-4">
             
             {/* Purple Header Panel */}
-            <div className="bg-purple-brand text-white p-4 rounded-xl shadow-md flex flex-col md:flex-row items-center justify-between gap-4 border-b-4 border-purple-800">
-              <div className="flex items-center gap-3">
-                <div className="w-12 h-12 bg-white bg-opacity-20 rounded-full flex items-center justify-center font-bold text-lg border border-white">
-                  {user?.fullName?.charAt(0) || 'S'}
-                </div>
-                <div>
-                  <h2 className="text-base sm:text-lg font-black tracking-wide leading-tight">{user?.fullName?.toUpperCase() || 'STUDENT USER'}</h2>
-                  <span className="text-xs text-purple-200 font-bold font-mono">Reg No: {matricNo}</span>
-                </div>
+            <div className="bg-purple-brand text-white p-4 sm:p-6 rounded-2xl shadow-md flex flex-wrap items-center justify-between gap-4">
+              <div>
+                <span className="text-xs font-bold uppercase tracking-wider text-purple-200 block">Current Exam Paper</span>
+                <h2 className="text-xl sm:text-2xl font-black">{selectedCourse || 'General Academic Assessment'}</h2>
+                <p className="text-xs text-purple-200 mt-0.5">Candidate: {matricNo || user?.name || 'Student Candidate'}</p>
               </div>
 
-              <div className="flex items-center gap-6">
-                <div className="text-center bg-black bg-opacity-35 px-4 py-1.5 rounded border border-gray-600">
-                  <span className="block text-[10px] text-gray-400 font-bold uppercase">Course Code</span>
-                  <span className="text-sm font-extrabold text-purple-100">{selectedCourse === 'tech-news' ? 'TECH 101' : selectedCourse}</span>
-                </div>
-
-                <div className="text-center bg-black bg-opacity-25 border border-white/20 px-5 py-1.5 rounded">
-                  <span className="block text-[10px] text-purple-200 font-bold uppercase">Time Remaining</span>
-                  <span className="text-xl font-mono font-black text-white tracking-wider">
-                    {formatTimer(timeLeft)}
+              <div className="flex items-center gap-4">
+                <div className="bg-white/15 backdrop-blur-md px-4 py-2 rounded-xl text-center border border-white/20">
+                  <span className="text-[10px] uppercase font-extrabold text-purple-200 block">Time Remaining</span>
+                  <span className={`text-xl sm:text-2xl font-mono font-black ${timeLeft < 120 ? 'text-red-300 animate-pulse' : 'text-white'}`}>
+                    {formatTime(timeLeft)}
                   </span>
                 </div>
+
+                <button
+                  onClick={() => setShowSubmitConfirm(true)}
+                  className="px-5 py-2.5 bg-red-600 hover:bg-red-500 text-white font-extrabold text-xs rounded-xl shadow-md transition-all active:scale-95"
+                >
+                  Submit Paper
+                </button>
               </div>
             </div>
 
-            {/* Split layout: Question Panel + Question Number Selector */}
+            {/* Exam Content Area */}
             <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
               
-              {/* Question numbers grid (FUTA style) */}
-              <div className="lg:col-span-1 bg-white rounded-xl shadow-sm border border-gray-100 p-4 h-fit">
-                <h3 className="text-sm font-black text-gray-800 border-b pb-2 mb-4 uppercase tracking-wider">Question Grid</h3>
-                <div className="grid grid-cols-5 gap-2">
-                  {questions.map((q, idx) => {
-                    const isAnswered = answers[q.id] !== undefined
-                    const isActive = idx === currentQuestionIdx
-                    
-                    let btnStyle = 'bg-white border-gray-300 text-gray-800'
-                    if (isAnswered) {
-                      btnStyle = 'bg-green-600 border-green-600 text-white hover:bg-green-700'
-                    }
-                    if (isActive) {
-                      btnStyle = 'bg-purple-brand border-purple-800 text-white font-extrabold ring-2 ring-purple-400 ring-offset-1'
-                    }
-
-                    return (
-                      <button
-                        key={q.id}
-                        onClick={() => setCurrentQuestionIdx(idx)}
-                        className={`py-2 text-xs font-semibold rounded border text-center transition-all ${btnStyle}`}
-                      >
-                        {idx + 1}
-                      </button>
-                    )
-                  })}
-                </div>
-              </div>
-
-              {/* Central question layout */}
-              <div className="lg:col-span-3 bg-white rounded-xl shadow-sm border border-gray-100 p-6 flex flex-col justify-between min-h-[400px]">
-                
-                {/* Question Area */}
+              {/* Question Box */}
+              <div className="lg:col-span-3 bg-white rounded-2xl border border-gray-200 shadow-sm p-6 sm:p-8 flex flex-col justify-between min-h-[420px]">
                 <div>
-                  <div className="flex justify-between border-b pb-3 mb-6 items-center">
-                    <span className="text-sm font-extrabold text-purple-brand uppercase tracking-wider">
+                  <div className="flex items-center justify-between border-b border-gray-100 pb-4 mb-6">
+                    <span className="text-xs font-black text-purple-brand uppercase tracking-wider bg-purple-50 px-3 py-1 rounded-full">
                       Question {currentQuestionIdx + 1} of {questions.length}
                     </span>
-                    <span className="text-xs text-gray-400 font-medium">Single Selection (1 Mark)</span>
+                    <span className="text-xs font-bold text-gray-400">
+                      {answers[questions[currentQuestionIdx]?.id] !== undefined ? '✓ Answered' : '○ Pending'}
+                    </span>
                   </div>
 
-                  <p className="text-lg font-bold text-gray-900 leading-relaxed mb-6 font-sans">
+                  <h3 className="text-lg sm:text-xl font-bold text-gray-900 leading-relaxed font-sans mb-6">
                     {questions[currentQuestionIdx]?.question}
-                  </p>
+                  </h3>
 
-                  {/* Options List */}
+                  {/* Options */}
                   <div className="space-y-3">
-                    {questions[currentQuestionIdx]?.options.map((opt, optIdx) => {
-                      const isSelected = answers[questions[currentQuestionIdx].id] === optIdx
+                    {questions[currentQuestionIdx]?.options.map((optText, optIdx) => {
+                      const curQId = questions[currentQuestionIdx].id
+                      const isSelected = answers[curQId] === optIdx
+
                       return (
                         <button
                           key={optIdx}
-                          onClick={() => handleOptionSelect(optIdx)}
-                          className={`w-full flex items-center gap-3 p-4 border rounded-xl text-left text-sm transition-all ${isSelected ? 'border-purple-brand bg-purple-50/50 font-semibold shadow-sm text-purple-950' : 'border-gray-200 hover:bg-gray-50'}`}
+                          onClick={() => handleSelectOption(curQId, optIdx)}
+                          className={`w-full text-left p-4 rounded-xl border text-sm font-semibold transition-all flex items-center justify-between ${
+                            isSelected
+                              ? 'border-[#4B2E83] bg-purple-50 text-[#4B2E83] shadow-sm'
+                              : 'border-gray-200 hover:border-purple-300 text-gray-700 bg-white'
+                          }`}
                         >
-                          <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center flex-shrink-0 ${isSelected ? 'border-purple-brand bg-purple-brand' : 'border-gray-300'}`}>
-                            {isSelected && <div className="w-2 h-2 bg-white rounded-full" />}
-                          </div>
-                          <span className="text-gray-800">
-                            <span className="font-bold mr-1">{String.fromCharCode(65 + optIdx)}.</span> {opt}
+                          <span className="flex items-center gap-3">
+                            <span className={`w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold ${
+                              isSelected ? 'bg-[#4B2E83] text-white' : 'bg-gray-100 text-gray-600'
+                            }`}>
+                              {String.fromCharCode(65 + optIdx)}
+                            </span>
+                            <span>{optText}</span>
                           </span>
+                          {isSelected && <span className="text-xs font-bold text-[#4B2E83]">Selected</span>}
                         </button>
                       )
                     })}
@@ -465,86 +450,142 @@ const Quizzes = () => {
                 </div>
 
                 {/* Bottom Navigation */}
-                <div className="mt-8 pt-6 border-t border-gray-100 flex justify-between gap-4">
+                <div className="flex items-center justify-between border-t border-gray-100 pt-6 mt-8">
                   <button
-                    onClick={() => setCurrentQuestionIdx(prev => Math.max(0, prev - 1))}
                     disabled={currentQuestionIdx === 0}
-                    className="px-4 py-2 border border-gray-300 text-gray-700 rounded-lg text-sm font-semibold hover:bg-gray-50 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+                    onClick={() => setCurrentQuestionIdx(prev => prev - 1)}
+                    className="px-5 py-2.5 border border-gray-200 rounded-xl text-xs font-bold text-gray-700 hover:bg-gray-50 disabled:opacity-30 disabled:hover:bg-transparent"
                   >
-                    ← Previous
+                    ← Previous Question
                   </button>
 
-                  <button
-                    onClick={() => setShowSubmitConfirm(true)}
-                    className="px-5 py-2 bg-red-600 text-white font-extrabold text-sm tracking-wider rounded-lg hover:bg-red-700 transition-colors uppercase shadow-sm"
-                  >
-                    Submit Exam
-                  </button>
-
-                  <button
-                    onClick={() => setCurrentQuestionIdx(prev => Math.min(questions.length - 1, prev + 1))}
-                    disabled={currentQuestionIdx === questions.length - 1}
-                    className="px-4 py-2 border border-gray-300 text-gray-700 rounded-lg text-sm font-semibold hover:bg-gray-50 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
-                  >
-                    Next →
-                  </button>
-                </div>
-              </div>
-            </div>
-
-            {/* Submit Confirmation Dialog */}
-            {showSubmitConfirm && (
-              <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-                <div className="fixed inset-0 bg-black bg-opacity-50" onClick={() => setShowSubmitConfirm(false)} />
-                <div className="relative bg-white rounded-xl shadow-xl max-w-sm w-full p-6 z-10 text-center">
-                  <h3 className="text-lg font-bold text-gray-900 mb-2">Submit Examination?</h3>
-                  <p className="text-sm text-gray-500 mb-6">
-                    You have answered {Object.keys(answers).length} of {questions.length} questions. Are you sure you want to finish the exam?
-                  </p>
-                  <div className="flex gap-3">
+                  <div className="flex items-center gap-2">
                     <button
-                      onClick={() => setShowSubmitConfirm(false)}
-                      className="flex-1 px-4 py-2 border border-gray-300 text-gray-700 rounded-lg text-sm font-semibold hover:bg-gray-50 transition-colors"
+                      onClick={() => handleAskBuddyAboutQuestion(questions[currentQuestionIdx])}
+                      className="hidden sm:flex items-center gap-1.5 px-3 py-2 border border-purple-200 text-purple-brand text-xs font-bold rounded-xl bg-purple-50 hover:bg-purple-100 transition-colors"
                     >
-                      Keep Writing
+                      <span>Ask AI Clarification</span>
                     </button>
-                    <button
-                      onClick={() => handleExamSubmit(false)}
-                      className="flex-1 px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg text-sm font-semibold transition-colors"
-                    >
-                      Yes, Submit
-                    </button>
+
+                    {currentQuestionIdx < questions.length - 1 ? (
+                      <button
+                        onClick={() => setCurrentQuestionIdx(prev => prev + 1)}
+                        className="px-6 py-2.5 bg-[#4B2E83] text-white rounded-xl text-xs font-bold hover:bg-[#3b2368] transition-colors shadow-sm"
+                      >
+                        Next Question →
+                      </button>
+                    ) : (
+                      <button
+                        onClick={() => setShowSubmitConfirm(true)}
+                        className="px-6 py-2.5 bg-emerald-600 text-white rounded-xl text-xs font-bold hover:bg-emerald-700 transition-colors shadow-sm"
+                      >
+                        Submit Final Paper
+                      </button>
+                    )}
                   </div>
                 </div>
               </div>
-            )}
-          </div>
-        )}
 
-        {/* VIEW 3: CBT RESULTS & CORRECTIONS PAGE */}
-        {viewState === 'result' && (
-          <div className="space-y-6">
-            
-            {/* Scorecard Widget */}
-            <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6 flex flex-col md:flex-row justify-between items-center gap-6">
-              <div>
-                <h2 className="text-2xl font-black text-gray-900 font-sans">Exam Performance Summary</h2>
-                <p className="text-sm text-gray-500 mt-1">Simulated test records synced to log. See corrections and tutoring explanation keys below.</p>
-                <div className="flex flex-wrap gap-4 mt-4 text-xs font-semibold text-gray-600">
-                  <div className="bg-gray-100 px-3 py-1.5 rounded">TIME SPENT: {elapsedTimeStr}</div>
-                  <div className="bg-gray-100 px-3 py-1.5 rounded">QUESTIONS: {questions.length}</div>
+              {/* Question Navigation Grid */}
+              <div className="bg-white rounded-2xl border border-gray-200 shadow-sm p-6 flex flex-col justify-between">
+                <div>
+                  <h4 className="text-xs font-black uppercase tracking-wider text-gray-400 mb-4">Question Navigator</h4>
+                  <div className="grid grid-cols-5 gap-2">
+                    {questions.map((q, idx) => {
+                      const isAns = answers[q.id] !== undefined
+                      const isCurrent = idx === currentQuestionIdx
+
+                      return (
+                        <button
+                          key={q.id}
+                          onClick={() => setCurrentQuestionIdx(idx)}
+                          className={`h-9 rounded-lg text-xs font-bold transition-all ${
+                            isCurrent
+                              ? 'bg-[#4B2E83] text-white ring-2 ring-[#4B2E83]/40'
+                              : isAns
+                              ? 'bg-emerald-100 text-emerald-800 border border-emerald-300'
+                              : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                          }`}
+                        >
+                          {idx + 1}
+                        </button>
+                      )
+                    })}
+                  </div>
+                </div>
+
+                <div className="pt-6 border-t border-gray-100 space-y-2 text-[11px] text-gray-500">
+                  <div className="flex items-center gap-2">
+                    <span className="w-3 h-3 rounded bg-emerald-100 border border-emerald-300" />
+                    <span>Answered Question</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <span className="w-3 h-3 rounded bg-gray-100" />
+                    <span>Unanswered</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <span className="w-3 h-3 rounded bg-[#4B2E83]" />
+                    <span>Active Screen</span>
+                  </div>
                 </div>
               </div>
 
-              <div className="flex items-center gap-4">
-                <div className="text-center bg-purple-50 border border-purple-100 rounded-xl px-6 py-4 shadow-sm">
-                  <span className="block text-[10px] font-bold text-purple-brand uppercase">Final Score</span>
-                  <span className="text-3xl font-black text-purple-brand">{score} / {questions.length}</span>
-                </div>
-                <div className="text-center bg-green-50 border border-green-100 rounded-xl px-6 py-4 shadow-sm">
-                  <span className="block text-[10px] font-bold text-green-500 uppercase">Percentage</span>
-                  <span className="text-3xl font-black text-green-950">{percentage}%</span>
-                </div>
+            </div>
+
+          </div>
+        )}
+
+        {/* Submit Confirmation Modal */}
+        {showSubmitConfirm && (
+          <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+            <div className="bg-white rounded-2xl max-w-md w-full p-6 shadow-2xl space-y-4">
+              <h3 className="text-xl font-bold text-gray-900">Submit Exam Session?</h3>
+              <p className="text-xs text-gray-600 leading-relaxed font-medium">
+                You have answered <span className="font-bold text-[#4B2E83]">{Object.keys(answers).length}</span> out of{' '}
+                <span className="font-bold text-gray-900">{questions.length}</span> questions. Once submitted, your score will be logged.
+              </p>
+              <div className="flex justify-end gap-3 pt-2">
+                <button
+                  onClick={() => setShowSubmitConfirm(false)}
+                  className="px-4 py-2 border border-gray-200 rounded-xl text-xs font-bold text-gray-700 hover:bg-gray-50"
+                >
+                  Return to Exam
+                </button>
+                <button
+                  onClick={() => handleExamSubmit(false)}
+                  className="px-5 py-2 bg-emerald-600 text-white rounded-xl text-xs font-bold hover:bg-emerald-700 shadow-md"
+                >
+                  Confirm & Submit
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* VIEW 3: RESULT & CORRECTIONS SCREEN */}
+        {viewState === 'result' && (
+          <div className="space-y-6">
+            
+            {/* Score Banner */}
+            <div className="bg-gradient-to-r from-[#4B2E83] to-purple-900 text-white p-8 rounded-3xl shadow-xl flex flex-col md:flex-row items-center justify-between gap-6">
+              <div className="space-y-2 text-center md:text-left">
+                <span className="inline-flex items-center gap-1.5 bg-white/10 px-3 py-1 rounded-full text-xs font-bold text-purple-200">
+                  <span>Exam Attempt Completed</span>
+                </span>
+                <h1 className="text-3xl sm:text-4xl font-black font-['Outfit',sans-serif]">
+                  Score Report: {percentage}%
+                </h1>
+                <p className="text-xs text-purple-200 font-medium">
+                  {selectedCourse || 'CBT Mock Session'} • Time Elapsed: {elapsedTimeStr}
+                </p>
+              </div>
+
+              <div className="bg-white/10 backdrop-blur-md p-6 rounded-2xl border border-white/20 text-center min-w-[160px]">
+                <span className="text-xs text-purple-200 font-bold uppercase tracking-wider block mb-1">Correct Answers</span>
+                <span className="text-3xl font-black text-white">{score} / {questions.length}</span>
+                <span className="block text-[11px] text-emerald-300 font-semibold mt-1">
+                  {percentage >= 70 ? 'First Class Standing!' : percentage >= 50 ? 'Passed' : 'Needs Revision'}
+                </span>
               </div>
             </div>
 

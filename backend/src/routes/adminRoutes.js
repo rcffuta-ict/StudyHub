@@ -12,6 +12,11 @@ import {
   updateAcademicSeason,
   upload 
 } from '../controllers/adminController.js'
+import {
+  getContactMessages,
+  updateMessageStatus,
+  deleteContactMessage
+} from '../controllers/contactController.js'
 
 const router = express.Router()
 
@@ -28,5 +33,9 @@ router.post('/upload-material', upload.single('file'), uploadMaterial)
 router.delete('/topics/:topicId', deleteTopic)
 router.put('/academic-season', updateAcademicSeason)
 
-export default router
+// Contact Messages Management
+router.get('/messages', getContactMessages)
+router.patch('/messages/:id/status', updateMessageStatus)
+router.delete('/messages/:id', deleteContactMessage)
 
+export default router

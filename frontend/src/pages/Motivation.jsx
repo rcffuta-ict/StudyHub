@@ -1,8 +1,12 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import Layout from '../components/Layout'
+import Pagination from '../components/Pagination'
 
 const Motivation = () => {
   const [activeTab, setActiveTab] = useState('morale') // 'morale', 'spiritual', 'insights'
+  const [currentPage, setCurrentPage] = useState(1)
+  const itemsPerPage = 2
+
   const [activeQuote, setActiveQuote] = useState({
     text: "Education is not the learning of facts, but the training of the mind to think.",
     author: "Albert Einstein"
@@ -72,10 +76,21 @@ const Motivation = () => {
     }
   ]
 
+  useEffect(() => {
+    setCurrentPage(1)
+  }, [activeTab])
+
   const handleMoraleBoost = () => {
     const randomIdx = Math.floor(Math.random() * boosters.length)
     setActiveQuote(boosters[randomIdx])
   }
+
+  const currentFeeds = activeTab === 'morale' ? moraleFeeds : activeTab === 'spiritual' ? spiritualFeeds : globalInsights
+  const totalPages = Math.ceil(currentFeeds.length / itemsPerPage)
+  const paginatedFeeds = currentFeeds.slice(
+    (currentPage - 1) * itemsPerPage,
+    currentPage * itemsPerPage
+  )
 
   return (
     <Layout>
@@ -124,11 +139,13 @@ const Motivation = () => {
           </div>
         </div>
 
-        {/* Feeds */}
+        {/* Feeds List */}
         <div className="space-y-4">
-          {activeTab === 'morale' && moraleFeeds.map((feed, idx) => (
+          {paginatedFeeds.map((feed, idx) => (
             <div key={idx} className="bg-white rounded-xl shadow-sm border border-gray-200 p-5 hover:border-purple-200 transition-colors">
-              <span className="text-[10px] font-bold px-2 py-0.5 bg-purple-100 text-purple-brand rounded">
+              <span className={`text-[10px] font-bold px-2 py-0.5 rounded ${
+                activeTab === 'morale' ? 'bg-purple-100 text-purple-brand' : activeTab === 'spiritual' ? 'bg-indigo-100 text-indigo-800' : 'bg-green-100 text-green-800'
+              }`}>
                 {feed.category}
               </span>
               <h3 className="font-extrabold text-gray-900 mt-2 text-lg">{feed.title}</h3>
@@ -136,25 +153,15 @@ const Motivation = () => {
             </div>
           ))}
 
-          {activeTab === 'spiritual' && spiritualFeeds.map((feed, idx) => (
-            <div key={idx} className="bg-white rounded-xl shadow-sm border border-gray-200 p-5 hover:border-purple-200 transition-colors">
-              <span className="text-[10px] font-bold px-2 py-0.5 bg-indigo-100 text-indigo-800 rounded">
-                {feed.category}
-              </span>
-              <h3 className="font-extrabold text-gray-900 mt-2 text-lg">{feed.title}</h3>
-              <p className="text-sm text-gray-600 mt-2 leading-relaxed whitespace-pre-line">{feed.content}</p>
-            </div>
-          ))}
-
-          {activeTab === 'insights' && globalInsights.map((feed, idx) => (
-            <div key={idx} className="bg-white rounded-xl shadow-sm border border-gray-200 p-5 hover:border-purple-200 transition-colors">
-              <span className="text-[10px] font-bold px-2 py-0.5 bg-green-100 text-green-800 rounded">
-                {feed.category}
-              </span>
-              <h3 className="font-extrabold text-gray-900 mt-2 text-lg">{feed.title}</h3>
-              <p className="text-sm text-gray-600 mt-2 leading-relaxed whitespace-pre-line">{feed.content}</p>
-            </div>
-          ))}
+          {/* Pagination */}
+          <Pagination
+            currentPage={currentPage}
+            totalPages={totalPages}
+            onPageChange={setCurrentPage}
+            totalItems={currentFeeds.length}
+            itemsPerPage={itemsPerPage}
+            className="mt-6"
+          />
         </div>
       </div>
     </Layout>

@@ -3,6 +3,7 @@ import Layout from '../components/Layout'
 import CourseCard from '../components/CourseCard'
 import BrowseCourseCard from '../components/BrowseCourseCard'
 import LoadingSpinner from '../components/LoadingSpinner'
+import Pagination from '../components/Pagination'
 import { coursesAPI } from '../services/api'
 import toast from 'react-hot-toast'
 
@@ -18,6 +19,8 @@ const Courses = () => {
   const [activeFilter, setActiveFilter] = useState('all')
   const [levelFilter, setLevelFilter] = useState('all')
   const [sortBy, setSortBy] = useState('alphabetical')
+  const [currentPage, setCurrentPage] = useState(1)
+  const itemsPerPage = 6
 
   useEffect(() => {
     fetchMyCourses()
@@ -110,6 +113,7 @@ const Courses = () => {
     }
 
     setFilteredCourses(filtered)
+    setCurrentPage(1)
   }, [courses, allAvailableCourses, activeTab, searchQuery, activeFilter, levelFilter, sortBy])
 
   if (loading) {
@@ -130,7 +134,14 @@ const Courses = () => {
     setActiveFilter('all')
     setLevelFilter('all')
     setSearchQuery('')
+    setCurrentPage(1)
   }
+
+  const totalPages = Math.ceil(filteredCourses.length / itemsPerPage)
+  const paginatedCourses = filteredCourses.slice(
+    (currentPage - 1) * itemsPerPage,
+    currentPage * itemsPerPage
+  )
 
   return (
     <Layout>
@@ -198,115 +209,108 @@ const Courses = () => {
           </button>
         </div>
 
-        {/* ── Toolbar ── */}
-        <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-4 space-y-4">
-          {/* Search + Sort row */}
-          <div className="flex flex-col sm:flex-row gap-3">
-            {/* Search */}
-            <div className="relative flex-1">
-              <svg className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-              </svg>
-              <input
-                type="text"
-                placeholder="Search courses..."
-                value={searchQuery}
-                onChange={e => setSearchQuery(e.target.value)}
-                className="w-full pl-10 pr-4 py-2.5 border border-gray-200 rounded-xl bg-gray-50/50 text-sm text-gray-900 placeholder:text-gray-400 focus:outline-none focus:bg-white focus:border-[#4B2E83] focus:ring-4 focus:ring-[#4B2E83]/10 transition-all"
-              />
-            </div>
-
-            {/* Sort */}
-            <select
-              value={sortBy}
-              onChange={e => setSortBy(e.target.value)}
-              className="pl-4 pr-8 py-2.5 border border-gray-200 rounded-xl bg-gray-50/50 text-sm text-gray-700 focus:outline-none focus:border-[#4B2E83] focus:ring-4 focus:ring-[#4B2E83]/10 transition-all appearance-none cursor-pointer min-w-[160px]"
-            >
-              <option value="alphabetical">A → Z</option>
-              {activeTab === 'my-courses' && (
-                <>
-                  <option value="progress">By Progress</option>
-                  <option value="recent">Recent Activity</option>
-                </>
-              )}
-              {activeTab === 'browse' && (
-                <option value="level">By Level</option>
-              )}
-            </select>
+        {/* ── Filter / Search Bar ── */}
+        <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-4 space-y-3 md:space-y-0 md:flex md:items-center md:justify-between gap-4">
+          <div className="relative flex-1 max-w-md">
+            <input
+              type="text"
+              placeholder="Search by course title..."
+              value={searchQuery}
+              onChange={e => setSearchQuery(e.target.value)}
+              className="w-full pl-9 pr-4 py-2 text-sm bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#4B2E83]/30 focus:border-[#4B2E83]"
+            />
+            <svg className="w-4 h-4 text-gray-400 absolute left-3 top-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+            </svg>
           </div>
 
-          {/* Status filter pills – My Courses */}
-          {activeTab === 'my-courses' && (
-            <div className="flex flex-wrap gap-2">
-              {[
-                { key: 'all', label: 'All' },
-                { key: 'in-progress', label: 'In Progress' },
-                { key: 'completed', label: 'Completed' },
-              ].map(({ key, label }) => (
-                <button
-                  key={key}
-                  onClick={() => setActiveFilter(key)}
-                  className={`px-4 py-1.5 rounded-full text-xs font-semibold transition-all duration-200 ${
-                    activeFilter === key
-                      ? 'bg-[#4B2E83] text-white shadow-sm shadow-[#4B2E83]/30'
-                      : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
-                  }`}
-                >
-                  {label}
-                </button>
-              ))}
-            </div>
-          )}
-
-          {/* Level filter pills – Browse tab */}
-          {activeTab === 'browse' && (
-            <div className="flex flex-wrap items-center gap-2">
-              <span className="text-xs font-semibold text-gray-500 uppercase tracking-wider mr-1">Level:</span>
-              {['all', '100', '200', '300', '400', '500'].map(lvl => {
-                const count = lvl === 'all'
-                  ? allAvailableCourses.length
-                  : allAvailableCourses.filter(c => String(c.level) === lvl).length
-                return (
+          <div className="flex items-center gap-3 flex-wrap">
+            {activeTab === 'my-courses' && (
+              <div className="flex bg-gray-100 p-1 rounded-xl text-xs font-semibold">
+                {[
+                  { id: 'all', label: 'All' },
+                  { id: 'in-progress', label: 'In Progress' },
+                  { id: 'completed', label: 'Completed' },
+                ].map(f => (
                   <button
-                    key={lvl}
-                    onClick={() => setLevelFilter(lvl)}
-                    className={`px-3.5 py-1.5 rounded-full text-xs font-semibold transition-all duration-200 ${
-                      levelFilter === lvl
-                        ? 'bg-[#4B2E83] text-white shadow-sm shadow-[#4B2E83]/30'
-                        : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                    key={f.id}
+                    onClick={() => setActiveFilter(f.id)}
+                    className={`px-3 py-1.5 rounded-lg transition-all ${
+                      activeFilter === f.id ? 'bg-white text-[#4B2E83] shadow-xs' : 'text-gray-500 hover:text-gray-800'
                     }`}
                   >
-                    {lvl === 'all' ? `All (${count})` : `${lvl}L (${count})`}
+                    {f.label}
                   </button>
-                )
-              })}
+                ))}
+              </div>
+            )}
+
+            {activeTab === 'browse' && (
+              <select
+                value={levelFilter}
+                onChange={e => setLevelFilter(e.target.value)}
+                className="text-xs font-semibold bg-gray-50 border border-gray-200 rounded-xl px-3 py-2 focus:outline-none focus:ring-2 focus:ring-[#4B2E83]/30"
+              >
+                <option value="all">All Levels</option>
+                <option value="100">100 Level</option>
+                <option value="200">200 Level</option>
+                <option value="300">300 Level</option>
+                <option value="400">400 Level</option>
+                <option value="500">500 Level</option>
+              </select>
+            )}
+
+            <div className="flex items-center gap-1.5 text-xs text-gray-500">
+              <span className="font-semibold hidden sm:inline">Sort:</span>
+              <select
+                value={sortBy}
+                onChange={e => setSortBy(e.target.value)}
+                className="font-semibold bg-gray-50 border border-gray-200 rounded-xl px-3 py-2 focus:outline-none focus:ring-2 focus:ring-[#4B2E83]/30"
+              >
+                <option value="alphabetical">A – Z</option>
+                {activeTab === 'my-courses' && <option value="progress">Highest Progress</option>}
+                {activeTab === 'my-courses' && <option value="recent">Recently Active</option>}
+                <option value="level">By Level</option>
+              </select>
             </div>
-          )}
+          </div>
         </div>
 
         {/* ── Course Grid / List ── */}
         {filteredCourses.length > 0 ? (
-          activeTab === 'browse' ? (
-            /* Grid for Browse */
-            <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-5">
-              {filteredCourses.map(course => (
-                <BrowseCourseCard
-                  key={course._id || course.id}
-                  course={course}
-                  isEnrolled={enrolledCourseIds.has(course._id || course.id)}
-                  onEnroll={handleEnroll}
-                  enrolling={enrolling[course._id || course.id] || false}
-                />
-              ))}
-            </div>
-          ) : (
-            /* List for My Courses */
-            <div className="space-y-4">
-              {filteredCourses.map(course => (
-                <CourseCard key={course._id || course.id} course={course} />
-              ))}
-            </div>
-          )
+          <div>
+            {activeTab === 'browse' ? (
+              /* Grid for Browse */
+              <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-5">
+                {paginatedCourses.map(course => (
+                  <BrowseCourseCard
+                    key={course._id || course.id}
+                    course={course}
+                    isEnrolled={enrolledCourseIds.has(course._id || course.id)}
+                    onEnroll={handleEnroll}
+                    enrolling={enrolling[course._id || course.id] || false}
+                  />
+                ))}
+              </div>
+            ) : (
+              /* List for My Courses */
+              <div className="space-y-4">
+                {paginatedCourses.map(course => (
+                  <CourseCard key={course._id || course.id} course={course} />
+                ))}
+              </div>
+            )}
+
+            {/* Pagination Component */}
+            <Pagination
+              currentPage={currentPage}
+              totalPages={totalPages}
+              onPageChange={setCurrentPage}
+              totalItems={filteredCourses.length}
+              itemsPerPage={itemsPerPage}
+              className="mt-6 bg-white rounded-2xl border border-gray-100 shadow-sm p-4"
+            />
+          </div>
         ) : (
           /* ── Empty State ── */
           <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-16 flex flex-col items-center justify-center text-center">
