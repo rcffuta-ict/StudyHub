@@ -458,8 +458,12 @@ const CourseDetail = () => {
               </div>
             </>
           ) : (
-            <div className="w-full aspect-video bg-gray-100 rounded-2xl flex items-center justify-center text-gray-500 text-sm font-medium">
-              Select a lesson topic below to start watching
+            <div className="w-full h-[50vh] min-h-[280px] max-h-[480px] sm:h-auto sm:aspect-video bg-gray-100/80 rounded-2xl flex flex-col items-center justify-center text-gray-500 text-sm font-medium p-4 text-center border border-dashed border-gray-300">
+              <svg className="w-10 h-10 text-gray-400 mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z" />
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+              <span>Select a lesson topic below to start watching</span>
             </div>
           )}
         </div>

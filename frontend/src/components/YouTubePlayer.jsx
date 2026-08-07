@@ -105,11 +105,11 @@ const YouTubePlayer = ({ videoId, onVideoEnd, onProgress, autoplay = false }) =>
   }, [videoId, autoplay])
 
   return (
-    <div className="w-full aspect-video bg-black rounded-lg overflow-hidden relative">
+    <div className="w-full h-[50vh] min-h-[280px] max-h-[480px] sm:h-auto sm:aspect-video bg-black rounded-xl overflow-hidden relative">
       <div ref={containerRef} className="w-full h-full"></div>
       {!isReady && (
         <div className="absolute inset-0 flex items-center justify-center bg-gray-900">
-          <div className="text-white">Loading video...</div>
+          <div className="text-white text-sm font-medium animate-pulse">Loading video...</div>
         </div>
       )}
     </div>

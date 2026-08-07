@@ -195,7 +195,7 @@ const SignUp = () => {
             <div className="w-10 h-10 bg-white rounded-full flex items-center justify-center shadow-md group-hover:scale-105 transition-transform">
               <img src={logo} alt="Studyhub logo" className="h-6 w-auto" />
             </div>
-            <span className="text-xl font-bold tracking-wider uppercase text-white">StudyHub</span>
+            <span className="text-xl font-bold tracking-wider text-white">StudyHub</span>
           </Link>
 
           <div className="max-w-lg mb-6 xl:mb-10 space-y-5 animate-fade-in-up">

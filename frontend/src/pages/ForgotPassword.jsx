@@ -28,9 +28,9 @@ const ForgotPassword = () => {
   }
 
   return (
-    <div className="flex w-full min-h-[100dvh] relative overflow-y-auto overflow-x-hidden selection:bg-purple-500 selection:text-white">
+    <div className="flex w-full h-screen max-h-screen relative overflow-hidden selection:bg-purple-500 selection:text-white">
       {/* Full-width background image with overlay */}
-      <div className="absolute inset-0 select-none z-0">
+      <div className="absolute inset-0 select-none z-0 overflow-hidden">
         <img
           src={authBg}
           alt="Students studying"
@@ -44,10 +44,10 @@ const ForgotPassword = () => {
       <div className="absolute bottom-[-10%] right-[-10%] w-[60%] h-[60%] rounded-full bg-[#4B2E83]/10 blur-[120px] pointer-events-none z-10" />
 
       {/* Two-column relative overlay */}
-      <div className="flex flex-col lg:flex-row w-full min-h-[100dvh] z-20 relative">
+      <div className="flex flex-col lg:flex-row w-full h-full z-20 relative overflow-hidden">
         
         {/* Left Column: Branding Showcase */}
-        <div className="hidden lg:flex flex-1 flex-col justify-between p-12 text-white select-none">
+        <div className="hidden lg:flex flex-1 flex-col justify-between p-8 xl:p-12 text-white select-none h-full">
           <Link to="/" className="flex items-center gap-3 w-fit hover:opacity-90 transition-opacity cursor-pointer group">
             <div className="w-10 h-10 bg-white/10 backdrop-blur-md rounded-xl flex items-center justify-center p-2 group-hover:scale-105 transition-transform">
               <img src={logo} alt="StudyHub logo" className="w-full h-full object-contain" />
@@ -55,14 +55,14 @@ const ForgotPassword = () => {
             <span className="text-xl font-black tracking-tight font-heading">StudyHub</span>
           </Link>
 
-          <div className="max-w-md space-y-6">
+          <div className="max-w-md space-y-5 animate-fade-in-up">
             <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/10 backdrop-blur-md text-xs font-bold uppercase tracking-wider text-purple-200">
               🔐 Account Security
             </div>
-            <h2 className="text-3xl font-extrabold font-heading leading-tight">
+            <h2 className="text-3xl xl:text-4xl font-extrabold font-heading leading-tight">
               Trouble Logging In?
             </h2>
-            <p className="text-sm text-white/80 font-medium leading-relaxed">
+            <p className="text-sm xl:text-base text-white/80 font-medium leading-relaxed">
               Don't worry! Enter your registered university email and we will send you a 6-digit OTP code to safely reset your password.
             </p>
 
@@ -73,7 +73,7 @@ const ForgotPassword = () => {
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
                   </svg>
                 </div>
-                <span className="text-sm font-medium text-white/90">Instant OTP Security Code</span>
+                <span className="text-xs xl:text-sm font-medium text-white/90">Instant OTP Security Code</span>
               </div>
               <div className="flex items-center gap-3">
                 <div className="w-8 h-8 rounded-lg bg-white/10 flex items-center justify-center shrink-0">
@@ -81,7 +81,7 @@ const ForgotPassword = () => {
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
                   </svg>
                 </div>
-                <span className="text-sm font-medium text-white/90">Protected Account Access</span>
+                <span className="text-xs xl:text-sm font-medium text-white/90">Protected Account Access</span>
               </div>
             </div>
           </div>
@@ -92,11 +92,11 @@ const ForgotPassword = () => {
         </div>
 
         {/* Right Column: Form Container */}
-        <div className="flex-1 flex items-center justify-center p-4 sm:p-6 md:p-12 min-h-[100dvh]">
-          <div className="max-w-[460px] w-full bg-white/95 backdrop-blur-md border border-white/30 shadow-2xl shadow-black/20 rounded-2xl px-6 py-8 sm:p-10 flex flex-col justify-between animate-fade-in-up">
+        <div className="flex-1 flex items-center justify-center p-3 sm:p-4 lg:p-6 h-full overflow-y-auto lg:overflow-hidden">
+          <div className="max-w-[460px] w-full bg-white/95 backdrop-blur-md border border-white/30 shadow-2xl shadow-black/25 rounded-2xl p-5 sm:p-6 lg:p-8 flex flex-col justify-between animate-fade-in-up my-auto">
             {/* Header */}
-            <div className="mb-6">
-              <div className="flex items-center justify-between mb-6 lg:hidden">
+            <div className="mb-5">
+              <div className="flex items-center justify-between mb-4 lg:hidden">
                 <Link to="/" className="flex items-center gap-2">
                   <img src={logo} alt="StudyHub" className="h-8 w-auto" />
                   <span className="text-lg font-bold text-[#4B2E83]">StudyHub</span>
@@ -106,7 +106,7 @@ const ForgotPassword = () => {
                 </Link>
               </div>
 
-              <h1 className="text-2xl sm:text-3xl font-black font-heading text-gray-900 tracking-tight mb-2">
+              <h1 className="text-2xl sm:text-3xl font-black font-heading text-gray-900 tracking-tight mb-1.5">
                 Forgot Password?
               </h1>
               <p className="text-xs sm:text-sm text-gray-500 font-medium leading-relaxed">
@@ -115,9 +115,9 @@ const ForgotPassword = () => {
             </div>
 
             {/* Form */}
-            <form className="flex flex-col gap-5" onSubmit={handleSubmit}>
-              <div className="flex flex-col gap-1.5">
-                <label htmlFor="email" className="text-xs font-bold text-gray-700 uppercase tracking-wider">
+            <form className="flex flex-col gap-4" onSubmit={handleSubmit}>
+              <div className="flex flex-col gap-1">
+                <label htmlFor="email" className="text-[11px] sm:text-xs font-bold text-gray-700 uppercase tracking-wider">
                   Email Address
                 </label>
                 <div className="relative">
@@ -133,7 +133,7 @@ const ForgotPassword = () => {
                     required
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
-                    className="w-full pl-10 pr-4 py-3 border border-gray-200 rounded-xl bg-gray-50/50 text-sm text-gray-900 placeholder:text-gray-400 focus:outline-none focus:bg-white focus:border-[#4B2E83] focus:ring-4 focus:ring-[#4B2E83]/10 transition-all"
+                    className="w-full pl-10 pr-3.5 py-2.5 border border-gray-200 rounded-xl bg-gray-50/50 text-sm text-gray-900 placeholder:text-gray-400 focus:outline-none focus:bg-white focus:border-[#4B2E83] focus:ring-4 focus:ring-[#4B2E83]/10 transition-all"
                     placeholder="name@university.edu"
                   />
                 </div>
@@ -142,7 +142,7 @@ const ForgotPassword = () => {
               <button
                 type="submit"
                 disabled={loading}
-                className="w-full py-3.5 bg-gradient-to-r from-[#4B2E83] to-[#5e3da1] text-white rounded-xl font-bold text-xs shadow-md shadow-[#4B2E83]/20 hover:shadow-lg hover:-translate-y-0.5 active:translate-y-0 disabled:opacity-60 disabled:cursor-not-allowed transition-all mt-2 flex items-center justify-center gap-2"
+                className="w-full py-3 sm:py-3.5 bg-gradient-to-r from-[#4B2E83] to-[#5e3da1] text-white rounded-xl font-bold text-xs sm:text-sm shadow-md shadow-[#4B2E83]/20 hover:shadow-lg hover:-translate-y-0.5 active:translate-y-0 disabled:opacity-60 disabled:cursor-not-allowed transition-all mt-1 flex items-center justify-center gap-2"
               >
                 {loading ? (
                   <span>Sending Code...</span>
@@ -158,7 +158,7 @@ const ForgotPassword = () => {
             </form>
 
             {/* Footer Back Link */}
-            <div className="mt-8 pt-6 border-t border-gray-100 text-center">
+            <div className="mt-6 pt-4 border-t border-gray-100 text-center">
               <Link
                 to="/login"
                 className="inline-flex items-center gap-2 text-xs font-bold text-[#4B2E83] hover:underline"
