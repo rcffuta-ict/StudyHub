@@ -1,6 +1,6 @@
 import { useNavigate } from 'react-router-dom'
 
-const CourseCard = ({ course }) => {
+const CourseCard = ({ course, onUnenroll, enrolling }) => {
   const navigate = useNavigate()
 
   const formatDate = (dateString) => {
@@ -16,7 +16,7 @@ const CourseCard = ({ course }) => {
   const progress = course.progress || 0
   const isCompleted = progress === 100
   const progressColor = isCompleted
-    ? 'from-emerald-400 to-emerald-500'
+    ? 'from-purple-500 to-indigo-600'
     : progress > 50
     ? 'from-[#4B2E83] to-[#7c5cbf]'
     : 'from-[#4B2E83] to-[#9b7dd4]'
@@ -61,7 +61,7 @@ const CourseCard = ({ course }) => {
 
             {/* Status badge */}
             {isCompleted && (
-              <span className="inline-flex items-center gap-1 bg-emerald-50 text-emerald-700 text-xs font-semibold px-2.5 py-1 rounded-full mb-3">
+              <span className="inline-flex items-center gap-1 bg-purple-50 text-purple-700 text-xs font-semibold px-2.5 py-1 rounded-full mb-3 border border-purple-200">
                 <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
                   <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
                 </svg>
@@ -74,7 +74,7 @@ const CourseCard = ({ course }) => {
           <div className="mt-3">
             <div className="flex items-center justify-between mb-1.5">
               <span className="text-xs font-semibold text-gray-600">Progress</span>
-              <span className={`text-xs font-bold ${isCompleted ? 'text-emerald-600' : 'text-[#4B2E83]'}`}>
+              <span className={`text-xs font-bold ${isCompleted ? 'text-purple-700' : 'text-[#4B2E83]'}`}>
                 {progress}%
               </span>
             </div>
@@ -85,13 +85,27 @@ const CourseCard = ({ course }) => {
               />
             </div>
 
-            {/* Last activity */}
-            <p className="text-xs text-gray-400 mt-2 flex items-center gap-1.5">
-              <svg className="w-3.5 h-3.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-              </svg>
-              {course.lastActivity ? `Last active ${formatDate(course.lastActivity)}` : 'No activity yet'}
-            </p>
+            <div className="mt-3 flex items-center justify-between gap-3 pt-2">
+              <p className="text-xs text-gray-400 flex items-center gap-1.5">
+                <svg className="w-3.5 h-3.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+                {course.lastActivity ? `Active ${formatDate(course.lastActivity)}` : 'No activity yet'}
+              </p>
+
+              {onUnenroll && (
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation()
+                    onUnenroll(course._id || course.id)
+                  }}
+                  disabled={enrolling}
+                  className="px-3 py-1 border border-red-200 text-red-600 hover:bg-red-50 text-xs font-bold rounded-lg transition-all disabled:opacity-50"
+                >
+                  Unenroll
+                </button>
+              )}
+            </div>
           </div>
         </div>
       </div>

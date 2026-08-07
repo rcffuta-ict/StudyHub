@@ -61,6 +61,7 @@ export const coursesAPI = {
   getAllCourses: () => api.get('/courses'),
   getCourseDetails: (courseId) => api.get(`/courses/${courseId}`),
   enrollCourse: (courseId) => api.post(`/courses/${courseId}/enroll`),
+  unenrollCourse: (courseId) => api.delete(`/courses/${courseId}/enroll`),
 }
 
 // Progress API

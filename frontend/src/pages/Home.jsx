@@ -176,7 +176,7 @@ const Home = () => {
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
         </svg>
       ),
-      title: '100+ Study Materials',
+      title: '50+ Study Materials',
       desc: 'Our curated library covers courses across 100L–500L with downloadable PDFs, past questions, and verified lecture notes.',
       link: '#library',
     },
@@ -216,9 +216,9 @@ const Home = () => {
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 8h2a2 2 0 012 2v6a2 2 0 01-2 2h-2v4l-4-4H9a1.994 1.994 0 01-1.414-.586m0 0L11 14h4a2 2 0 002-2V6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2v4l.586-.586z" />
         </svg>
       ),
-      title: 'Peer Forum & Discussions',
-      desc: 'Ask questions, share insights, and collaborate with peers in course-specific threads moderated by top students.',
-      link: '#community',
+      title: 'Departmental Study Groups',
+      desc: 'Connect directly with course reps and join official departmental WhatsApp study groups for instant course updates.',
+      link: '#library',
     },
     {
       icon: (
@@ -336,7 +336,7 @@ const Home = () => {
           <div className="max-w-3xl mx-auto space-y-7 flex flex-col items-center text-center">
             
             <div className="inline-flex items-center gap-2 bg-white/10 border border-white/20 backdrop-blur-md px-4 py-1.5 rounded-full text-xs font-bold text-purple-200">
-              <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
+              <span className="w-2 h-2 rounded-full bg-purple-400 animate-pulse"></span>
               <span>All-In-One Academic Performance Suite</span>
             </div>
 
@@ -347,7 +347,7 @@ const Home = () => {
             </h1>
 
             <p className="text-base sm:text-lg text-purple-100/90 leading-relaxed font-medium max-w-2xl mx-auto">
-              Study smarter, not harder. Access 100+ verified materials, practice timed CBT exam mocks, calculate multi-semester CGPA, and get instant step-by-step AI tutoring.
+              Study smarter, not harder. Access 50+ verified materials, practice timed CBT exam mocks, calculate multi-semester CGPA, and get instant step-by-step AI tutoring.
             </p>
 
             <div className="flex flex-col sm:flex-row items-center justify-center gap-3 pt-1 w-full sm:w-auto">
@@ -373,7 +373,7 @@ const Home = () => {
               {[
                 { value: '98.4%', label: 'Exam Success Rate' },
                 { value: '5,000+', label: 'CBT Practice Qs' },
-                { value: '100+', label: 'PDF Past Questions' },
+                { value: '50+', label: 'PDF Past Questions' },
               ].map((s) => (
                 <div
                   key={s.label}
@@ -408,8 +408,8 @@ const Home = () => {
           <div className="bg-gradient-to-r from-purple-900/90 via-[#4B2E83] to-indigo-950 p-6 sm:p-10 rounded-3xl border border-purple-500/30 shadow-2xl flex flex-col lg:flex-row items-center justify-between gap-8">
             
             <div className="space-y-3 max-w-xl text-center lg:text-left">
-              <div className="inline-flex items-center gap-2 bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider">
-                <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
+              <div className="inline-flex items-center gap-2 bg-purple-500/20 text-purple-200 border border-purple-400/30 px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider">
+                <span className="w-2 h-2 rounded-full bg-purple-400 animate-pulse"></span>
                 <span>Exams Live in Session</span>
               </div>
               <h2 className="text-2xl sm:text-4xl font-black text-white tracking-tight font-['Outfit',sans-serif]">
@@ -422,7 +422,7 @@ const Home = () => {
               <div className="flex flex-wrap items-center justify-center lg:justify-start gap-3 pt-2">
                 <button
                   onClick={() => navigate(user ? '/quizzes' : '/signup')}
-                  className="px-5 py-2.5 bg-emerald-600 hover:bg-emerald-500 text-white font-bold rounded-xl text-xs transition-transform active:scale-95 shadow-md flex items-center gap-1.5"
+                  className="px-5 py-2.5 bg-[#4B2E83] hover:bg-[#3b2368] text-white font-bold rounded-xl text-xs transition-transform active:scale-95 shadow-md flex items-center gap-1.5"
                 >
                   <span>Practice CBT Mock Exam</span>
                   <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -454,7 +454,7 @@ const Home = () => {
                     {card.title}
                   </p>
                   <p className="text-lg sm:text-xl font-black text-white leading-tight">{card.val}</p>
-                  <p className="text-[10px] font-semibold text-emerald-300 mt-1">{card.sub}</p>
+                  <p className="text-[10px] font-semibold text-purple-200 mt-1">{card.sub}</p>
                 </div>
               ))}
             </div>
@@ -676,14 +676,14 @@ const Home = () => {
                     Submit Answer
                   </button>
                 ) : (
-                  <div className="p-3 bg-emerald-50 rounded-xl border border-emerald-200 text-xs">
-                    <p className="font-extrabold text-emerald-800 mb-1 flex items-center gap-1">
-                      <svg className="w-4 h-4 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <div className="p-3 bg-purple-50 rounded-xl border border-purple-200 text-xs">
+                    <p className="font-extrabold text-[#4B2E83] mb-1 flex items-center gap-1">
+                      <svg className="w-4 h-4 text-[#4B2E83]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
                       </svg>
                       <span>{cbtSelected === 'B' ? 'Correct Answer!' : 'Incorrect. Correct Option is B'}</span>
                     </p>
-                    <p className="text-[11px] text-emerald-900 leading-tight">{cbtQuestion.explanation}</p>
+                    <p className="text-[11px] text-purple-950 leading-tight">{cbtQuestion.explanation}</p>
                   </div>
                 )}
               </div>
@@ -855,11 +855,10 @@ const Home = () => {
         </div>
       </section>
 
-      {/* ─── DAILY MOTIVATION & FORUM COMMUNITY SPOTLIGHT ─── */}
+      {/* ─── DAILY MOTIVATION SPOTLIGHT ─── */}
       <section id="community" className="py-16 bg-white border-b border-gray-100">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-10">
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-            
+          <div className="max-w-4xl mx-auto">
             {/* Daily Quote & Mindset */}
             <div className="bg-gradient-to-br from-[#4B2E83] to-purple-900 text-white p-8 rounded-3xl shadow-xl flex flex-col justify-between space-y-6">
               <div className="space-y-3">
@@ -875,7 +874,7 @@ const Home = () => {
                 <p className="text-xs text-purple-200 font-semibold">— Academic Unit Motivation</p>
               </div>
 
-              <div className="flex items-center justify-between border-t border-purple-700/50 pt-4">
+              <div className="flex flex-col sm:flex-row items-center justify-between gap-4 border-t border-purple-700/50 pt-4">
                 <div className="flex items-center gap-2.5">
                   <div className="w-8 h-8 rounded-lg bg-white/10 flex items-center justify-center">
                     <svg className="w-4 h-4 text-purple-200" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -889,110 +888,16 @@ const Home = () => {
                 </div>
                 <button
                   onClick={() => navigate(user ? '/motivation' : '/signup')}
-                  className="px-4 py-2 bg-white text-[#4B2E83] rounded-xl font-bold text-xs hover:bg-purple-50 transition-colors"
+                  className="px-4 py-2 bg-white text-[#4B2E83] rounded-xl font-bold text-xs hover:bg-purple-50 transition-colors w-full sm:w-auto"
                 >
                   View Motivation Hub
                 </button>
               </div>
             </div>
-
-            {/* Peer Forum Teaser */}
-            <div className="bg-[#faf9f6] p-8 rounded-3xl border border-gray-200 shadow-md flex flex-col justify-between">
-              <div className="space-y-4">
-                <div className="flex items-center justify-between">
-                  <h3 className="text-lg font-black text-gray-900 font-['Outfit',sans-serif] flex items-center gap-2">
-                    <svg className="w-5 h-5 text-[#4B2E83]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 8h2a2 2 0 012 2v6a2 2 0 01-2 2h-2v4l-4-4H9a1.994 1.994 0 01-1.414-.586m0 0L11 14h4a2 2 0 002-2V6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2v4l.586-.586z" />
-                    </svg>
-                    <span>Student Forum Discussions</span>
-                  </h3>
-                  <span className="text-xs font-bold text-[#4B2E83]">Active Threads</span>
-                </div>
-
-                <div className="space-y-3">
-                  {[
-                    { title: 'Best strategy for answering MTH 101 integration questions under time pressure?', replies: 14, author: 'EngineeredMind' },
-                    { title: 'PHY 101 vector mechanics summary notes download thread', replies: 28, author: 'FUTA_Techie' },
-                    { title: 'How to prepare for CBT 1-hour 50 questions efficiently?', replies: 19, author: 'GradeASeeker' },
-                  ].map((thread, idx) => (
-                    <div key={idx} className="bg-white p-3.5 rounded-2xl border border-gray-200/80 text-xs space-y-1 hover:border-purple-300 transition-colors">
-                      <p className="font-bold text-gray-800 leading-snug">{thread.title}</p>
-                      <div className="flex items-center justify-between text-[11px] text-gray-400 pt-1">
-                        <span>by @{thread.author}</span>
-                        <span className="font-semibold text-purple-700">{thread.replies} replies</span>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </div>
-
-              <div className="pt-4">
-                <button
-                  onClick={() => navigate(user ? '/forum' : '/signup')}
-                  className="w-full py-2.5 bg-[#4B2E83] text-white rounded-xl text-xs font-bold hover:bg-[#3b2368] transition-colors shadow"
-                >
-                  Join Discussion Forum →
-                </button>
-              </div>
-            </div>
-
-          </div>
-        </div>
-      </section>
-
-      {/* ─── STUDENT TESTIMONIALS & FACULTIES ─── */}
-      <section className="py-16 bg-white border-b border-gray-100">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-10">
-          <div className="text-center max-w-2xl mx-auto mb-12 space-y-2">
-            <div className="inline-flex items-center gap-1 text-xs font-bold text-[#4B2E83] uppercase tracking-widest">
-              <svg className="w-4 h-4 text-purple-700" fill="currentColor" viewBox="0 0 24 24">
-                <path d="M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z" />
-              </svg>
-              <span>Student Success</span>
-            </div>
-            <h2 className="text-3xl sm:text-4xl font-black text-gray-900 tracking-tight font-['Outfit',sans-serif]">
-              Trusted by Top Performing Students
-            </h2>
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-12">
-            {[
-              {
-                name: 'David O.',
-                dept: 'Electrical Engineering (300L)',
-                cgpa: '4.72 CGPA',
-                text: 'The CBT Exam simulator was a game changer for me. Practicing past questions in real-time condition eliminated all exam anxiety.',
-              },
-              {
-                name: 'Blessing A.',
-                dept: 'Computer Science (200L)',
-                cgpa: '4.85 CGPA',
-                text: 'StudyBuddy AI helped me break down complex algorithm derivations whenever I got stuck late at night. Super reliable!',
-              },
-              {
-                name: 'Emmanuel K.',
-                dept: 'Mechanical Engineering (400L)',
-                cgpa: '4.60 CGPA',
-                text: 'Having all course PDFs, past question solutions, and CGPA projections in one platform made my semester revision seamless.',
-              },
-            ].map((t, i) => (
-              <div key={i} className="bg-[#faf9f6] p-6 rounded-2xl border border-gray-200 space-y-3">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <h4 className="font-extrabold text-sm text-gray-900">{t.name}</h4>
-                    <p className="text-[11px] text-gray-500 font-medium">{t.dept}</p>
-                  </div>
-                  <span className="text-xs font-black text-[#4B2E83] bg-purple-100 border border-purple-200 px-2.5 py-1 rounded-md">
-                    {t.cgpa}
-                  </span>
-                </div>
-                <p className="text-xs text-gray-600 leading-relaxed font-medium italic">"{t.text}"</p>
-              </div>
-            ))}
           </div>
 
           {/* Faculty Coverage Badges */}
-          <div className="text-center space-y-3">
+          <div className="text-center space-y-3 pt-12">
             <p className="text-xs font-bold text-gray-400 uppercase tracking-wider">Covering All Academic Schools & Departments</p>
             <div className="flex flex-wrap items-center justify-center gap-2 text-xs font-bold text-gray-600">
               {['SEET – Engineering', 'SOC – Computing', 'SAAT – Agriculture', 'SET – Environmental', 'Sciences', 'SLS – Life Sciences'].map((fac) => (
@@ -1115,7 +1020,7 @@ const Home = () => {
                       type="text"
                       value={contactForm.name}
                       onChange={(e) => setContactForm({ ...contactForm, name: e.target.value })}
-                      placeholder="e.g. Ayano Gift"
+                      placeholder="e.g. John Doe"
                       required
                       className="w-full px-4 py-2.5 text-xs bg-white border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#4B2E83]"
                     />
@@ -1126,7 +1031,7 @@ const Home = () => {
                       type="email"
                       value={contactForm.email}
                       onChange={(e) => setContactForm({ ...contactForm, email: e.target.value })}
-                      placeholder="name@student.futa.edu.ng"
+                      placeholder="johndoe@gmail.com"
                       required
                       className="w-full px-4 py-2.5 text-xs bg-white border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#4B2E83]"
                     />
@@ -1200,10 +1105,10 @@ const Home = () => {
       {/* ─── COMPREHENSIVE MULTI-COLUMN FOOTER ─── */}
       <footer className="bg-[#190c2b] text-purple-200/80 pt-12 pb-6 text-xs border-t border-purple-900/50">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-10">
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-8 pb-10 border-b border-purple-900/40">
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-8 pb-10 border-b border-purple-900/40">
             
-            {/* Col 1: Brand Info */}
-            <div className="space-y-3">
+            {/* Col 1: Brand Info (Spans 2 cols on mobile, 1 on md) */}
+            <div className="col-span-2 md:col-span-1 space-y-3">
               <div className="flex items-center gap-2">
                 <img src={logo} alt="StudyHub" className="w-8 h-8 object-contain" />
                 <span className="text-lg font-black text-white tracking-tight font-['Outfit',sans-serif]">
@@ -1211,26 +1116,26 @@ const Home = () => {
                 </span>
               </div>
               <p className="text-purple-300/70 text-xs leading-relaxed">
-                Empowering university students with centralized study materials, CBT exam simulators, StudyBuddy AI, and CGPA tracking tools.
+                Empowering university students with 50+ centralized study materials, CBT exam simulators, and CGPA tracking tools.
               </p>
             </div>
 
             {/* Col 2: Platform Features */}
-            <div className="space-y-4">
+            <div className="col-span-1 space-y-4">
               <p className="text-xs font-black uppercase text-white tracking-wider">Platform Features</p>
-              <ul className="space-y-4">
+              <ul className="space-y-3">
                 <li><Link to="/library" className="hover:text-white transition-colors">Study Library & PDFs</Link></li>
                 <li><Link to="/quizzes" className="hover:text-white transition-colors">CBT Exam Simulator</Link></li>
                 <li><Link to="/cgpa-calculator" className="hover:text-white transition-colors">CGPA Calculator</Link></li>
                 <li><Link to="/motivation" className="hover:text-white transition-colors">Daily Motivation Hub</Link></li>
-                <li><Link to="/forum" className="hover:text-white transition-colors">Student Forum</Link></li>
+                <li><Link to="/forum" className="hover:text-white transition-colors">WhatsApp Community</Link></li>
               </ul>
             </div>
 
             {/* Col 3: Resources & Academics */}
-            <div className="space-y-4">
+            <div className="col-span-1 space-y-4">
               <p className="text-xs font-black uppercase text-white tracking-wider">Resources</p>
-              <ul className="space-y-4">
+              <ul className="space-y-3">
                 <li><a href="#exam-hub" className="hover:text-white transition-colors">100L Past Questions</a></li>
                 <li><a href="#exam-hub" className="hover:text-white transition-colors">200L Past Questions</a></li>
                 <li><a href="#demos" className="hover:text-white transition-colors">Lecture Notes & Summaries</a></li>
@@ -1238,10 +1143,10 @@ const Home = () => {
               </ul>
             </div>
 
-            {/* Col 4: Portals & Access */}
-            <div className="space-y-4">
+            {/* Col 4: Portals & Admin (Spans 2 cols on mobile, 1 on md) */}
+            <div className="col-span-2 md:col-span-1 space-y-4">
               <p className="text-xs font-black uppercase text-white tracking-wider">Portals & Admin</p>
-              <ul className="space-y-4">
+              <ul className="space-y-3">
                 <li><Link to="/login" className="hover:text-white transition-colors">Student Portal Login</Link></li>
                 <li><Link to="/signup" className="hover:text-white transition-colors">Create Free Account</Link></li>
                 <li><Link to="/admin/login" className="hover:text-white transition-colors">System Admin Login</Link></li>
@@ -1251,12 +1156,20 @@ const Home = () => {
 
           </div>
 
-          <div className="pt-6 flex flex-col md:flex-row items-center justify-between gap-4 text-purple-400/60">
+          <div className="pt-6 flex flex-col sm:flex-row items-center justify-between gap-4 text-purple-400/60">
             <p>© 2026 StudyHub – Academic Unit, RCFFUTA. All rights reserved.</p>
-            <div className="flex gap-4 font-semibold text-purple-300/80">
+            <div className="flex items-center gap-4 font-semibold text-purple-300/80">
               <Link to="/login" className="hover:text-white">Login</Link>
               <Link to="/signup" className="hover:text-white">Register</Link>
-              <a href="#contact" className="hover:text-white">Contact Us</a>
+              <button
+                onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
+                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-white/10 hover:bg-white/20 text-purple-200 hover:text-white transition-all text-xs font-bold cursor-pointer"
+              >
+                <span>Back to top</span>
+                <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M5 10l7-7m0 0l7 7m-7-7v18" />
+                </svg>
+              </button>
             </div>
           </div>
         </div>

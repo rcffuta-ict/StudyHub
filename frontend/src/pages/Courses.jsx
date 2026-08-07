@@ -76,6 +76,24 @@ const Courses = () => {
     }
   }
 
+  const handleUnenroll = async (courseId) => {
+    if (!window.confirm('Are you sure you want to terminate your enrollment in this course?')) return
+    try {
+      setEnrolling({ ...enrolling, [courseId]: true })
+      await coursesAPI.unenrollCourse(courseId)
+      toast.success('Successfully terminated course enrollment')
+      const newEnrolled = new Set(enrolledCourseIds)
+      newEnrolled.delete(courseId)
+      setEnrolledCourseIds(newEnrolled)
+      fetchMyCourses()
+      fetchAllCourses()
+    } catch (error) {
+      toast.error(error.response?.data?.message || 'Failed to unenroll from course')
+    } finally {
+      setEnrolling({ ...enrolling, [courseId]: false })
+    }
+  }
+
   useEffect(() => {
     const sourceCourses = activeTab === 'my-courses' ? courses : allAvailableCourses
     let filtered = [...sourceCourses]
@@ -288,6 +306,7 @@ const Courses = () => {
                     course={course}
                     isEnrolled={enrolledCourseIds.has(course._id || course.id)}
                     onEnroll={handleEnroll}
+                    onUnenroll={handleUnenroll}
                     enrolling={enrolling[course._id || course.id] || false}
                   />
                 ))}
@@ -296,7 +315,12 @@ const Courses = () => {
               /* List for My Courses */
               <div className="space-y-4">
                 {paginatedCourses.map(course => (
-                  <CourseCard key={course._id || course.id} course={course} />
+                  <CourseCard
+                    key={course._id || course.id}
+                    course={course}
+                    onUnenroll={handleUnenroll}
+                    enrolling={enrolling[course._id || course.id] || false}
+                  />
                 ))}
               </div>
             )}

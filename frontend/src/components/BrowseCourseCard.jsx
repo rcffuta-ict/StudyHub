@@ -1,6 +1,6 @@
 import { useNavigate } from 'react-router-dom'
 
-const BrowseCourseCard = ({ course, isEnrolled, onEnroll, enrolling }) => {
+const BrowseCourseCard = ({ course, isEnrolled, onEnroll, onUnenroll, enrolling }) => {
   const navigate = useNavigate()
 
   const handleClick = () => {
@@ -10,6 +10,11 @@ const BrowseCourseCard = ({ course, isEnrolled, onEnroll, enrolling }) => {
   const handleEnrollClick = (e) => {
     e.stopPropagation()
     if (!isEnrolled && onEnroll) onEnroll(course._id || course.id)
+  }
+
+  const handleUnenrollClick = (e) => {
+    e.stopPropagation()
+    if (isEnrolled && onUnenroll) onUnenroll(course._id || course.id)
   }
 
   const levelColors = {
@@ -82,12 +87,24 @@ const BrowseCourseCard = ({ course, isEnrolled, onEnroll, enrolling }) => {
 
         {/* CTA Button */}
         {isEnrolled ? (
-          <button
-            onClick={handleClick}
-            className="w-full py-2.5 bg-gradient-to-r from-[#4B2E83] to-[#5e3da1] text-white text-sm font-bold rounded-xl hover:shadow-lg hover:shadow-[#4B2E83]/25 hover:-translate-y-0.5 active:translate-y-0 transition-all duration-200"
-          >
-            View Course →
-          </button>
+          <div className="flex items-center gap-2">
+            <button
+              onClick={handleClick}
+              className="flex-1 py-2.5 bg-gradient-to-r from-[#4B2E83] to-[#5e3da1] text-white text-xs font-bold rounded-xl hover:shadow-lg hover:shadow-[#4B2E83]/25 hover:-translate-y-0.5 active:translate-y-0 transition-all duration-200"
+            >
+              View Course →
+            </button>
+            {onUnenroll && (
+              <button
+                onClick={handleUnenrollClick}
+                disabled={enrolling}
+                title="Terminate Enrollment"
+                className="px-3 py-2.5 border border-red-200 text-red-600 hover:bg-red-50 hover:border-red-300 text-xs font-bold rounded-xl transition-all duration-200 disabled:opacity-50"
+              >
+                Drop
+              </button>
+            )}
+          </div>
         ) : (
           <button
             onClick={handleEnrollClick}

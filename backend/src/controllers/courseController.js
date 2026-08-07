@@ -107,6 +107,26 @@ export const enrollCourse = async (req, res) => {
   }
 }
 
+// @desc    Unenroll / terminate enrollment in a course
+// @route   DELETE /api/courses/:courseId/enroll
+// @access  Private
+export const unenrollCourse = async (req, res) => {
+  try {
+    const userId = req.user._id
+    const { courseId } = req.params
+
+    const enrollment = await Enrollment.findOneAndDelete({ userId, courseId })
+    if (!enrollment) {
+      return res.status(404).json({ message: 'Enrollment not found' })
+    }
+
+    res.json({ message: 'Successfully unenrolled from course' })
+  } catch (error) {
+    console.error('Unenroll course error:', error)
+    res.status(500).json({ message: 'Server error occurred' })
+  }
+}
+
 // @desc    Get course details with topics and videos
 // @route   GET /api/courses/:courseId
 // @access  Private
