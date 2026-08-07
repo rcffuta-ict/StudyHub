@@ -250,7 +250,7 @@ const Home = () => {
 
         {/* ── FLOATING FROSTED GLASS NAVBAR ── */}
         <header
-          className="fixed top-4 sm:top-6 left-4 right-4 py-3 sm:left-6 sm:right-6 lg:left-10 lg:right-10 max-w-7xl mx-auto z-50 rounded-full bg-white/50 border border-white/50 shadow-[0_8px_25px_rgba(107,70,193,0.18)] transition-all duration-300"
+          className={`fixed top-4 sm:top-6 left-4 right-4 py-3 sm:left-6 sm:right-6 lg:left-10 lg:right-10 max-w-7xl mx-auto z-50 ${mobileMenuOpen ? 'rounded-3xl' : 'rounded-full'} bg-white/50 border border-white/50 shadow-[0_8px_25px_rgba(107,70,193,0.18)] transition-all duration-300`}
           style={{ backdropFilter: 'blur(16px)', WebkitBackdropFilter: 'blur(16px)' }}
         >
           <div className="px-4 sm:px-6 lg:px-8 h-12 sm:h-13 flex items-center justify-between gap-4 sm:gap-6">
@@ -309,7 +309,7 @@ const Home = () => {
           </div>
 
           {mobileMenuOpen && (
-            <div className="md:hidden border-t border-gray-100/80 bg-white/90 rounded-b-3xl px-4 py-3 space-y-1">
+            <div className="md:hidden border-t border-white/20 px-4 py-3 mt-3 space-y-1">
               {[
                 { label: 'Live Exam Hub', href: '#exam-hub' },
                 { label: 'Interactive Tools', href: '#demos' },
