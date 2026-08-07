@@ -553,75 +553,64 @@ const Home = () => {
 
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
             
-            {/* DEMO 1: Mini CGPA Calculator */}
-            <div className="bg-white p-6 rounded-3xl border border-gray-200 shadow-md flex flex-col justify-between">
-              <div>
+            {/* FEATURE 1: Curated Video Tutorials */}
+            <div className="bg-white p-6 rounded-3xl border border-gray-200 shadow-md flex flex-col justify-between relative overflow-hidden group">
+              <div className="relative z-10">
                 <div className="flex items-center gap-2.5 mb-4">
-                  <div className="w-9 h-9 rounded-xl bg-purple-100 text-[#4B2E83] flex items-center justify-center">
-                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
+                  <div className="w-9 h-9 rounded-xl bg-red-100 text-red-600 flex items-center justify-center">
+                    <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
+                      <path d="M19.615 3.184c-3.604-.246-11.631-.245-15.23 0-3.897.266-4.356 2.62-4.385 8.816.029 6.185.484 8.549 4.385 8.816 3.6.245 11.626.246 15.23 0 3.897-.266 4.356-2.62 4.385-8.816-.029-6.185-.484-8.549-4.385-8.816zm-10.615 12.816v-8l8 3.993-8 4.007z" />
                     </svg>
                   </div>
-                  <h3 className="text-lg font-black text-gray-900">Mini CGPA Estimator</h3>
+                  <h3 className="text-lg font-black text-gray-900 leading-tight">Curated Video Tutorials</h3>
                 </div>
-                <p className="text-xs text-gray-500 mb-4 font-medium">Enter course units and target grades to calculate your GPA:</p>
-
-                <div className="space-y-2.5 mb-4">
-                  {teaserCourses.map((c, idx) => (
-                    <div key={idx} className="flex items-center gap-2 bg-gray-50 p-2.5 rounded-xl border border-gray-100 text-xs">
-                      <span className="font-bold text-gray-800 w-20">{c.code}</span>
-                      <select
-                        value={c.units}
-                        onChange={(e) => {
-                          const updated = [...teaserCourses]
-                          updated[idx].units = Number(e.target.value)
-                          setTeaserCourses(updated)
-                        }}
-                        className="bg-white border border-gray-200 rounded px-2 py-1 font-bold text-gray-700 focus:outline-none"
-                      >
-                        {[1, 2, 3, 4, 5, 6].map((u) => (
-                          <option key={u} value={u}>{u} Units</option>
-                        ))}
-                      </select>
-                      <select
-                        value={c.grade}
-                        onChange={(e) => {
-                          const updated = [...teaserCourses]
-                          updated[idx].grade = e.target.value
-                          setTeaserCourses(updated)
-                        }}
-                        className="bg-white border border-gray-200 rounded px-2 py-1 font-bold text-[#4B2E83] focus:outline-none ml-auto"
-                      >
-                        {['A', 'B', 'C', 'D', 'E', 'F'].map((g) => (
-                          <option key={g} value={g}>Grade {g}</option>
-                        ))}
-                      </select>
+                <p className="text-sm text-gray-600 mb-5 font-medium leading-relaxed">
+                  Struggling with a topic? Watch hand-picked YouTube video lessons perfectly tailored to your course outline.
+                </p>
+                
+                <div className="space-y-3">
+                  <div className="flex items-start gap-3 bg-gray-50/80 p-3 rounded-xl border border-gray-100">
+                    <div className="w-16 h-10 bg-gray-200 rounded-lg overflow-hidden relative flex-shrink-0">
+                      <img src="https://img.youtube.com/vi/dQw4w9WgXcQ/mqdefault.jpg" alt="Video Thumbnail" className="w-full h-full object-cover" />
+                      <div className="absolute inset-0 flex items-center justify-center bg-black/20">
+                        <svg className="w-4 h-4 text-white drop-shadow-md" fill="currentColor" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
+                      </div>
                     </div>
-                  ))}
+                    <div>
+                      <h4 className="text-xs font-bold text-gray-800 line-clamp-1">Introduction to Calculus</h4>
+                      <p className="text-[10px] text-gray-500 font-medium">Topic 1 • MTH 101</p>
+                    </div>
+                  </div>
+                  <div className="flex items-start gap-3 bg-gray-50/80 p-3 rounded-xl border border-gray-100">
+                    <div className="w-16 h-10 bg-gray-200 rounded-lg overflow-hidden relative flex-shrink-0">
+                      <img src="https://img.youtube.com/vi/bJzb-RuUcMU/mqdefault.jpg" alt="Video Thumbnail" className="w-full h-full object-cover" />
+                      <div className="absolute inset-0 flex items-center justify-center bg-black/20">
+                        <svg className="w-4 h-4 text-white drop-shadow-md" fill="currentColor" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
+                      </div>
+                    </div>
+                    <div>
+                      <h4 className="text-xs font-bold text-gray-800 line-clamp-1">Kinematics &amp; Dynamics</h4>
+                      <p className="text-[10px] text-gray-500 font-medium">Topic 3 • PHY 101</p>
+                    </div>
+                  </div>
                 </div>
               </div>
 
-              <div>
-                <button
-                  onClick={calculateTeaserGPA}
-                  className="w-full py-2.5 bg-[#4B2E83] text-white rounded-xl text-xs font-bold hover:bg-[#3b2368] transition-colors shadow"
+              <div className="mt-6 relative z-10">
+                <Link
+                  to="/courses"
+                  className="w-full py-2.5 bg-red-50 text-red-600 rounded-xl text-xs font-bold hover:bg-red-100 transition-colors shadow-sm flex items-center justify-center gap-2"
                 >
-                  Calculate Test GPA
-                </button>
-
-                {calculatedGPA !== null && (
-                  <div className="mt-4 p-3 bg-purple-50 rounded-xl border border-purple-200 text-center">
-                    <p className="text-xs text-purple-700 font-bold">Estimated GPA:</p>
-                    <p className="text-2xl font-black text-[#4B2E83]">{calculatedGPA} / 5.00</p>
-                    <p className="text-[10px] text-purple-700 font-bold flex items-center justify-center gap-1 mt-0.5">
-                      <svg className="w-3.5 h-3.5 text-purple-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                      </svg>
-                      <span>{Number(calculatedGPA) >= 4.5 ? 'First Class Standing!' : 'Upper Second Class'}</span>
-                    </p>
-                  </div>
-                )}
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z" />
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                  </svg>
+                  Explore Course Videos
+                </Link>
               </div>
+
+              {/* Decorative background blob */}
+              <div className="absolute -bottom-10 -right-10 w-32 h-32 bg-red-100/50 rounded-full blur-2xl group-hover:scale-110 transition-transform duration-500 z-0"></div>
             </div>
 
             {/* DEMO 2: Timed CBT Practice Sampler */}
