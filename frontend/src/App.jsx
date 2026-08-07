@@ -21,7 +21,9 @@ import ForgotPassword from './pages/ForgotPassword'
 import EnterOTP from './pages/EnterOTP'
 import ResetPassword from './pages/ResetPassword'
 import NotFound from './pages/NotFound'
-
+import Notifications from './pages/Notifications'
+import Terms from './pages/Terms'
+import Privacy from './pages/Privacy'
 // Protected Route Component
 const ProtectedRoute = ({ children }) => {
   const { user, loading } = useAuth()
@@ -141,6 +143,14 @@ function App() {
               } 
             />
             <Route 
+              path="/notifications" 
+              element={
+                <ProtectedRoute>
+                  <Notifications />
+                </ProtectedRoute>
+              } 
+            />
+            <Route 
               path="/courses" 
               element={
                 <ProtectedRoute>
@@ -223,6 +233,8 @@ function App() {
             <Route path="/forgot-password" element={<ForgotPassword />} />
             <Route path="/enter-otp" element={<EnterOTP />} />
             <Route path="/reset-password" element={<ResetPassword />} />
+            <Route path="/terms" element={<Terms />} />
+            <Route path="/privacy" element={<Privacy />} />
             {/* 404 - Catch all route */}
             <Route path="*" element={<NotFound />} />
           </Routes>

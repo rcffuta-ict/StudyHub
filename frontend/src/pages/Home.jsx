@@ -132,7 +132,7 @@ const Home = () => {
 
   const resources = [
     {
-      title: 'MTH 101 – Calculus & Algebra',
+      title: 'MTH 101 – Elementary Mathematics I',
       type: 'Past Questions',
       level: '100L',
       downloads: '2.4k',
@@ -141,7 +141,7 @@ const Home = () => {
       color: 'from-purple-700 to-[#4B2E83]',
     },
     {
-      title: 'PHY 101 – General Physics',
+      title: 'PHY 101 – General Physics I',
       type: 'Lecture Notes',
       level: '100L',
       downloads: '1.9k',
@@ -150,7 +150,7 @@ const Home = () => {
       color: 'from-indigo-600 to-purple-700',
     },
     {
-      title: 'CHM 101 – Organic Chemistry',
+      title: 'CHM 101 – General Chemistry I',
       type: 'Past Questions',
       level: '100L',
       downloads: '3.1k',
@@ -176,8 +176,8 @@ const Home = () => {
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
         </svg>
       ),
-      title: '50+ Study Materials',
-      desc: 'Our curated library covers courses across 100L–500L with downloadable PDFs, past questions, and verified lecture notes.',
+      title: 'Video Tutorials & 50+ Materials',
+      desc: 'Our curated library covers courses across 100L–500L with video tutorials tailored to each topic in the course outline, downloadable PDFs, and past questions.',
       link: '#library',
     },
     {
@@ -347,7 +347,7 @@ const Home = () => {
             </h1>
 
             <p className="text-base sm:text-lg text-purple-100/90 leading-relaxed font-medium max-w-2xl mx-auto">
-              Study smarter, not harder. Access 50+ verified materials, practice timed CBT exam mocks, calculate multi-semester CGPA, and get instant step-by-step AI tutoring.
+              Study smarter, not harder. Access 50+ verified materials, watch topic-tailored video tutorials, practice timed CBT exam mocks, calculate multi-semester CGPA, and get instant step-by-step AI tutoring.
             </p>
 
             <div className="flex flex-col sm:flex-row items-center justify-center gap-3 pt-1 w-full sm:w-auto">
@@ -416,7 +416,7 @@ const Home = () => {
                 Semester Examinations Are Currently Live
               </h2>
               <p className="text-sm text-purple-200/90 leading-relaxed font-medium">
-                Exams commenced this week! Stay sharp by practicing timed CBT mock questions, revising high-yield PDF summaries, and getting instant AI step-by-step solutions.
+                Exams commenced this week! Stay sharp by practicing timed CBT mock questions, watching topic-tailored video tutorials, revising high-yield PDF summaries, and getting instant AI step-by-step solutions.
               </p>
               
               <div className="flex flex-wrap items-center justify-center lg:justify-start gap-3 pt-2">
@@ -493,8 +493,8 @@ const Home = () => {
               },
               {
                 step: '02',
-                title: 'Study Notes & AI Guidance',
-                desc: 'Read verified lecture PDFs, watch targeted video topics, and ask StudyBuddy AI to clarify tough assignments step-by-step.',
+                title: 'Video Tutorials & Study Notes',
+                desc: 'Watch video tutorials tailored to each topic, read verified lecture PDFs, and ask StudyBuddy AI to clarify tough assignments step-by-step.',
                 icon: (
                   <svg className="w-6 h-6 text-[#4B2E83]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />
@@ -1083,7 +1083,7 @@ const Home = () => {
             Ready to Ace Your Semester Exams?
           </h2>
           <p className="text-base text-purple-200 max-w-xl mx-auto leading-relaxed font-medium">
-            Join thousands of university students using StudyHub for CBT practice, past question downloads, and CGPA growth.
+            Join thousands of university students using StudyHub for topic-tailored video tutorials, CBT practice, past question downloads, and CGPA growth.
           </p>
           <div className="flex flex-col sm:flex-row items-center justify-center gap-4 pt-2">
             <button
@@ -1136,8 +1136,8 @@ const Home = () => {
             <div className="col-span-1 space-y-4">
               <p className="text-xs font-black uppercase text-white tracking-wider">Resources</p>
               <ul className="space-y-3">
-                <li><a href="#exam-hub" className="hover:text-white transition-colors">100L Past Questions</a></li>
-                <li><a href="#exam-hub" className="hover:text-white transition-colors">200L Past Questions</a></li>
+                <li><Link to="/library?level=100" className="hover:text-white transition-colors">100L Past Questions</Link></li>
+                <li><Link to="/library?level=200" className="hover:text-white transition-colors">200L Past Questions</Link></li>
                 <li><a href="#demos" className="hover:text-white transition-colors">Lecture Notes & Summaries</a></li>
                 <li><a href="#contact" className="hover:text-white transition-colors">Contact Support</a></li>
               </ul>

@@ -28,18 +28,27 @@ const ForgotPassword = () => {
   }
 
   return (
-    <div className="flex w-full h-screen bg-[#faf9f6] overflow-hidden selection:bg-purple-500 selection:text-white">
-      {/* Left Column: Branding Showcase */}
-      <div className="hidden lg:flex flex-1 relative h-screen overflow-hidden">
+    <div className="flex w-full min-h-[100dvh] relative overflow-y-auto overflow-x-hidden selection:bg-purple-500 selection:text-white">
+      {/* Full-width background image with overlay */}
+      <div className="absolute inset-0 select-none z-0">
         <img
           src={authBg}
           alt="Students studying"
           className="w-full h-full object-cover"
         />
-        <div className="absolute inset-0 bg-gradient-to-t from-[#2c1854]/95 via-[#4B2E83]/80 to-purple-950/40" />
+        <div className="absolute inset-0 bg-gradient-to-tr from-[#2c1854]/95 via-[#4B2E83]/85 to-[#faf9f6]/20 mix-blend-multiply" />
+      </div>
 
-        <div className="absolute inset-0 p-12 flex flex-col justify-between z-10 text-white">
-          <Link to="/" className="flex items-center gap-3 w-fit group">
+      {/* Background blobs for visual depth */}
+      <div className="absolute top-[-10%] left-[-10%] w-[60%] h-[60%] rounded-full bg-[#4B2E83]/10 blur-[120px] pointer-events-none z-10" />
+      <div className="absolute bottom-[-10%] right-[-10%] w-[60%] h-[60%] rounded-full bg-[#4B2E83]/10 blur-[120px] pointer-events-none z-10" />
+
+      {/* Two-column relative overlay */}
+      <div className="flex flex-col lg:flex-row w-full min-h-[100dvh] z-20 relative">
+        
+        {/* Left Column: Branding Showcase */}
+        <div className="hidden lg:flex flex-1 flex-col justify-between p-12 text-white select-none">
+          <Link to="/" className="flex items-center gap-3 w-fit hover:opacity-90 transition-opacity cursor-pointer group">
             <div className="w-10 h-10 bg-white/10 backdrop-blur-md rounded-xl flex items-center justify-center p-2 group-hover:scale-105 transition-transform">
               <img src={logo} alt="StudyHub logo" className="w-full h-full object-contain" />
             </div>
@@ -81,85 +90,85 @@ const ForgotPassword = () => {
             © 2026 StudyHub. All rights reserved.
           </div>
         </div>
-      </div>
 
-      {/* Right Column: Form Container */}
-      <div className="flex-1 flex items-center justify-center p-4 sm:p-6 md:p-12 h-screen overflow-y-auto">
-        <div className="max-w-[460px] w-full bg-white/95 backdrop-blur-md border border-white/30 shadow-2xl shadow-black/20 rounded-2xl px-6 py-8 sm:p-10 flex flex-col justify-between animate-fade-in-up">
-          {/* Header */}
-          <div className="mb-6">
-            <div className="flex items-center justify-between mb-6 lg:hidden">
-              <Link to="/" className="flex items-center gap-2">
-                <img src={logo} alt="StudyHub" className="h-8 w-auto" />
-                <span className="text-lg font-bold text-[#4B2E83]">StudyHub</span>
-              </Link>
-              <Link to="/login" className="text-xs font-bold text-[#4B2E83]">
-                Log In
-              </Link>
-            </div>
-
-            <h1 className="text-2xl sm:text-3xl font-black font-heading text-gray-900 tracking-tight mb-2">
-              Forgot Password?
-            </h1>
-            <p className="text-xs sm:text-sm text-gray-500 font-medium leading-relaxed">
-              Enter your account email address below to receive a 6-digit OTP verification code.
-            </p>
-          </div>
-
-          {/* Form */}
-          <form className="flex flex-col gap-5" onSubmit={handleSubmit}>
-            <div className="flex flex-col gap-1.5">
-              <label htmlFor="email" className="text-xs font-bold text-gray-700 uppercase tracking-wider">
-                Email Address
-              </label>
-              <div className="relative">
-                <span className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400">
-                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
-                  </svg>
-                </span>
-                <input
-                  id="email"
-                  name="email"
-                  type="email"
-                  required
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  className="w-full pl-10 pr-4 py-3 border border-gray-200 rounded-xl bg-gray-50/50 text-sm text-gray-900 placeholder:text-gray-400 focus:outline-none focus:bg-white focus:border-[#4B2E83] focus:ring-4 focus:ring-[#4B2E83]/10 transition-all"
-                  placeholder="name@university.edu"
-                />
+        {/* Right Column: Form Container */}
+        <div className="flex-1 flex items-center justify-center p-4 sm:p-6 md:p-12 min-h-[100dvh]">
+          <div className="max-w-[460px] w-full bg-white/95 backdrop-blur-md border border-white/30 shadow-2xl shadow-black/20 rounded-2xl px-6 py-8 sm:p-10 flex flex-col justify-between animate-fade-in-up">
+            {/* Header */}
+            <div className="mb-6">
+              <div className="flex items-center justify-between mb-6 lg:hidden">
+                <Link to="/" className="flex items-center gap-2">
+                  <img src={logo} alt="StudyHub" className="h-8 w-auto" />
+                  <span className="text-lg font-bold text-[#4B2E83]">StudyHub</span>
+                </Link>
+                <Link to="/login" className="text-xs font-bold text-[#4B2E83]">
+                  Log In
+                </Link>
               </div>
+
+              <h1 className="text-2xl sm:text-3xl font-black font-heading text-gray-900 tracking-tight mb-2">
+                Forgot Password?
+              </h1>
+              <p className="text-xs sm:text-sm text-gray-500 font-medium leading-relaxed">
+                Enter your account email address below to receive a 6-digit OTP verification code.
+              </p>
             </div>
 
-            <button
-              type="submit"
-              disabled={loading}
-              className="w-full py-3.5 bg-gradient-to-r from-[#4B2E83] to-[#5e3da1] text-white rounded-xl font-bold text-xs shadow-md shadow-[#4B2E83]/20 hover:shadow-lg hover:-translate-y-0.5 active:translate-y-0 disabled:opacity-60 disabled:cursor-not-allowed transition-all mt-2 flex items-center justify-center gap-2"
-            >
-              {loading ? (
-                <span>Sending Code...</span>
-              ) : (
-                <>
-                  <span>Send OTP Code</span>
-                  <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14 5l7 7m0 0l-7 7m7-7H3" />
-                  </svg>
-                </>
-              )}
-            </button>
-          </form>
+            {/* Form */}
+            <form className="flex flex-col gap-5" onSubmit={handleSubmit}>
+              <div className="flex flex-col gap-1.5">
+                <label htmlFor="email" className="text-xs font-bold text-gray-700 uppercase tracking-wider">
+                  Email Address
+                </label>
+                <div className="relative">
+                  <span className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400">
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+                    </svg>
+                  </span>
+                  <input
+                    id="email"
+                    name="email"
+                    type="email"
+                    required
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    className="w-full pl-10 pr-4 py-3 border border-gray-200 rounded-xl bg-gray-50/50 text-sm text-gray-900 placeholder:text-gray-400 focus:outline-none focus:bg-white focus:border-[#4B2E83] focus:ring-4 focus:ring-[#4B2E83]/10 transition-all"
+                    placeholder="name@university.edu"
+                  />
+                </div>
+              </div>
 
-          {/* Footer Back Link */}
-          <div className="mt-8 pt-6 border-t border-gray-100 text-center">
-            <Link
-              to="/login"
-              className="inline-flex items-center gap-2 text-xs font-bold text-[#4B2E83] hover:underline"
-            >
-              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
-              </svg>
-              <span>Back to Sign In</span>
-            </Link>
+              <button
+                type="submit"
+                disabled={loading}
+                className="w-full py-3.5 bg-gradient-to-r from-[#4B2E83] to-[#5e3da1] text-white rounded-xl font-bold text-xs shadow-md shadow-[#4B2E83]/20 hover:shadow-lg hover:-translate-y-0.5 active:translate-y-0 disabled:opacity-60 disabled:cursor-not-allowed transition-all mt-2 flex items-center justify-center gap-2"
+              >
+                {loading ? (
+                  <span>Sending Code...</span>
+                ) : (
+                  <>
+                    <span>Send OTP Code</span>
+                    <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14 5l7 7m0 0l-7 7m7-7H3" />
+                    </svg>
+                  </>
+                )}
+              </button>
+            </form>
+
+            {/* Footer Back Link */}
+            <div className="mt-8 pt-6 border-t border-gray-100 text-center">
+              <Link
+                to="/login"
+                className="inline-flex items-center gap-2 text-xs font-bold text-[#4B2E83] hover:underline"
+              >
+                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+                </svg>
+                <span>Back to Sign In</span>
+              </Link>
+            </div>
           </div>
         </div>
       </div>

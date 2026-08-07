@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
 import { useAuth } from '../context/AuthContext'
-import { useNavigate, useLocation } from 'react-router-dom'
+import { useNavigate, useLocation, Link } from 'react-router-dom'
 import logo from '../assets/logo.png'
 import dashboardIcon from '../assets/dashboard-square-02.png'
 import coursesIcon from '../assets/notebook-02.png'
@@ -176,12 +176,12 @@ const Layout = ({ children }) => {
         <div className="flex flex-col h-full">
           {/* Logo with Collapse Toggle */}
           <div className={`flex ${sidebarCollapsed ? 'flex-col py-6 px-2 gap-4' : 'flex-row p-6 justify-between gap-3'} items-center border-b border-gray-200`}>
-            <div className="flex items-center gap-3">
+            <Link to="/" className="flex items-center gap-3">
               <img src={logo} alt="Studyhub" className="w-10 h-10 object-contain" />
               {!sidebarCollapsed && (
                 <span className="text-xl font-bold text-purple-brand">StudyHub</span>
               )}
-            </div>
+            </Link>
             {!sidebarCollapsed && (
               <button
                 onClick={() => setSidebarCollapsed(true)}
@@ -338,7 +338,9 @@ const Layout = ({ children }) => {
               </button>
 
               {/* Notifications */}
-              <button className="relative p-2 text-gray-500 hover:bg-white hover:shadow-sm rounded-full transition-all border border-transparent hover:border-gray-150">
+              <button 
+                onClick={() => navigate('/notifications')}
+                className="relative p-2 text-gray-500 hover:bg-white hover:shadow-sm rounded-full transition-all border border-transparent hover:border-gray-150">
                 <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
                 </svg>

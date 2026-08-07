@@ -158,7 +158,7 @@ const Login = () => {
   }
 
   return (
-    <div className="flex w-full h-screen overflow-hidden relative">
+    <div className="flex w-full min-h-[100dvh] relative overflow-y-auto overflow-x-hidden">
       {/* Full-width background image with overlay */}
       <div className="absolute inset-0 select-none z-0">
         <img 
@@ -174,7 +174,7 @@ const Login = () => {
       <div className="absolute bottom-[-10%] right-[-10%] w-[60%] h-[60%] rounded-full bg-[#4B2E83]/10 blur-[120px] pointer-events-none z-10" />
 
       {/* Two-column relative overlay */}
-      <div className="flex flex-col lg:flex-row w-full h-screen z-20 relative overflow-hidden">
+      <div className="flex flex-col lg:flex-row w-full min-h-[100dvh] z-20 relative">
         
         {/* Left Column: Teaser details (visible on desktop) */}
         <div className="hidden lg:flex flex-1 flex-col justify-between p-12 text-white select-none">
@@ -238,8 +238,8 @@ const Login = () => {
         </div>
 
         {/* Right Column: Form Container */}
-        <div className="flex-1 flex items-center justify-center p-4 sm:p-5 md:p-6 lg:p-12 h-screen overflow-hidden">
-          <div className="max-w-[500px] w-full h-auto lg:h-full bg-white/95 backdrop-blur-md border border-white/30 shadow-2xl shadow-black/25 rounded-2xl px-5 pb-5 pt-8 sm:px-6 sm:pb-6 sm:pt-10 flex flex-col justify-between overflow-y-auto animate-fade-in-up scrollbar-thin">
+        <div className="flex-1 flex items-center justify-center p-4 sm:p-5 md:p-6 lg:p-12 min-h-[100dvh]">
+          <div className="max-w-[500px] w-full bg-white/95 backdrop-blur-md border border-white/30 shadow-2xl shadow-black/25 rounded-2xl px-5 pb-5 pt-8 sm:px-6 sm:pb-6 sm:pt-10 flex flex-col justify-between animate-fade-in-up">
             {/* Header */}
             <div className="flex justify-between items-start mb-6">
               <div>
@@ -406,7 +406,7 @@ const Login = () => {
 
             {/* Terms */}
             <p className="text-[11px] text-gray-400 text-center mt-5 pt-3.5 border-t border-gray-100/80 leading-relaxed font-semibold">
-              By signing in, you agree to our <a href="#" className="underline hover:text-gray-600">Terms of Service</a> and <a href="#" className="underline hover:text-gray-600">Privacy Policy</a>.
+              By signing in, you agree to our <Link to="/terms" className="underline hover:text-gray-600">Terms of Service</Link> and <Link to="/privacy" className="underline hover:text-gray-600">Privacy Policy</Link>.
             </p>
           </div>
         </div>

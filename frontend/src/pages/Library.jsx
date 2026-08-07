@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react'
+import { useLocation } from 'react-router-dom'
 import Layout from '../components/Layout'
 import { useAuth } from '../context/AuthContext'
 import GuestRestrictionModal from '../components/GuestRestrictionModal'
@@ -10,9 +11,13 @@ const Library = () => {
   const { user } = useAuth()
   const [isModalOpen, setIsModalOpen] = useState(false)
   const [showUploadForm, setShowUploadForm] = useState(false)
+  const location = useLocation()
+  const queryParams = new URLSearchParams(location.search)
+  const initialLevel = queryParams.get('level') || 'all'
+
   const [searchQuery, setSearchQuery] = useState('')
   const [typeFilter, setTypeFilter] = useState('all')
-  const [levelFilter, setLevelFilter] = useState('all')
+  const [levelFilter, setLevelFilter] = useState(initialLevel)
   const [currentPage, setCurrentPage] = useState(1)
   const itemsPerPage = 5
 
