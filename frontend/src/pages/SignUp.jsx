@@ -6,6 +6,7 @@ import logo from '../assets/logo.png'
 import authBg from '../assets/authBg.png'
 import { useGoogleLogin } from '@react-oauth/google'
 import { faculties, levels } from '../utils/faculties'
+import LegalModal from '../components/LegalModal'
 
 const SignUp = () => {
   const [formData, setFormData] = useState({
@@ -23,6 +24,8 @@ const SignUp = () => {
   const navigate = useNavigate()
   const [loading, setLoading] = useState(false)
   const [availableDepartments, setAvailableDepartments] = useState([])
+
+  const [legalModalState, setLegalModalState] = useState({ isOpen: false, type: 'terms' })
 
   // Google Login and Registration States
   const [showGoogleRegisterModal, setShowGoogleRegisterModal] = useState(false)
@@ -168,9 +171,9 @@ const SignUp = () => {
   }
 
   return (
-    <div className="flex w-full min-h-[100dvh] lg:h-screen lg:max-h-screen relative overflow-x-hidden">
+    <div className="flex w-full h-screen max-h-screen relative overflow-hidden">
       {/* Full-width background image with overlay */}
-      <div className="absolute inset-0 select-none z-0">
+      <div className="absolute inset-0 select-none z-0 overflow-hidden">
         <img 
           src={authBg} 
           alt="Students studying" 
@@ -184,7 +187,7 @@ const SignUp = () => {
       <div className="absolute bottom-[-10%] right-[-10%] w-[60%] h-[60%] rounded-full bg-[#4B2E83]/10 blur-[120px] pointer-events-none z-10" />
 
       {/* Two-column relative overlay */}
-      <div className="flex flex-col lg:flex-row w-full min-h-[100dvh] lg:h-screen z-20 relative">
+      <div className="flex flex-col lg:flex-row w-full h-full z-20 relative overflow-hidden">
         
         {/* Left Column: Teaser details (visible on desktop) */}
         <div className="hidden lg:flex flex-1 flex-col justify-between p-8 xl:p-12 text-white select-none h-full">
@@ -248,7 +251,7 @@ const SignUp = () => {
         </div>
 
         {/* Right Column: Form Container */}
-        <div className="flex-1 flex items-center justify-center p-3 sm:p-4 lg:p-6 min-h-[100dvh] lg:min-h-0 lg:h-full overflow-y-auto lg:overflow-hidden">
+        <div className="flex-1 flex items-center justify-center p-3 sm:p-4 lg:p-6 h-full overflow-y-auto lg:overflow-hidden">
           <div className="max-w-[780px] w-full bg-white/95 backdrop-blur-md border border-white/30 shadow-2xl shadow-black/25 rounded-2xl p-5 sm:p-6 lg:p-7 flex flex-col justify-between animate-fade-in-up my-auto">
             {/* Header */}
             <div className="flex justify-between items-start mb-3 sm:mb-4">
@@ -559,8 +562,8 @@ const SignUp = () => {
             </div>
 
             {/* Terms */}
-            <p className="text-[10px] sm:text-[11px] text-gray-400 text-center mt-3 sm:mt-4 pt-2 sm:pt-2.5 border-t border-gray-100/80 leading-relaxed font-semibold">
-              By creating an account, you agree to our <Link to="/terms" className="underline hover:text-gray-600">Terms of Service</Link> and <Link to="/privacy" className="underline hover:text-gray-600">Privacy Policy</Link>.
+            <p className="text-[11px] text-gray-400 text-center mt-5 pt-3.5 border-t border-gray-100/80 leading-relaxed font-semibold">
+              By creating an account, you agree to our <button type="button" onClick={() => setLegalModalState({ isOpen: true, type: 'terms' })} className="underline hover:text-gray-600">Terms of Service</button> and <button type="button" onClick={() => setLegalModalState({ isOpen: true, type: 'privacy' })} className="underline hover:text-gray-600">Privacy Policy</button>.
             </p>
           </div>
         </div>
@@ -704,6 +707,12 @@ const SignUp = () => {
           </div>
         </div>
       )}
+
+      <LegalModal 
+        isOpen={legalModalState.isOpen} 
+        onClose={() => setLegalModalState({ ...legalModalState, isOpen: false })} 
+        type={legalModalState.type} 
+      />
     </div>
   )
 }
