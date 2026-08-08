@@ -25,7 +25,8 @@ const register = async (req, res) => {
       })
     }
 
-    const { email, password, fullName, faculty, department, level } = req.body
+    const { email, password, fullName, name, faculty, department, level } = req.body
+    const userFullName = (fullName || name || '').trim()
 
     // Check if user exists
     const userExists = await User.findOne({ email })
@@ -37,7 +38,7 @@ const register = async (req, res) => {
     const user = await User.create({
       email,
       password,
-      fullName,
+      fullName: userFullName,
       faculty,
       department,
       level,

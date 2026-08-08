@@ -10,7 +10,13 @@ const router = express.Router()
 const registerValidation = [
   body('email').isEmail().withMessage('Please provide a valid email'),
   body('password').isLength({ min: 6 }).withMessage('Password must be at least 6 characters'),
-  body('fullName').trim().notEmpty().withMessage('Full name is required'),
+  body().custom((value, { req }) => {
+    const name = req.body.fullName || req.body.name
+    if (!name || typeof name !== 'string' || !name.trim()) {
+      throw new Error('Full name is required')
+    }
+    return true
+  }),
   body('faculty').trim().notEmpty().withMessage('Faculty is required'),
   body('department').trim().notEmpty().withMessage('Department is required'),
   body('level').isIn(['100', '200', '300', '400', '500']).withMessage('Level must be 100, 200, 300, 400, or 500'),

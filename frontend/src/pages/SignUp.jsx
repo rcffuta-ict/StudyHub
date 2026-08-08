@@ -87,6 +87,7 @@ const SignUp = () => {
     setLoading(true)
     try {
       const result = await register({
+        fullName: formData.name,
         name: formData.name,
         email: formData.email,
         password: formData.password,

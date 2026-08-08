@@ -128,7 +128,11 @@ export const AuthProvider = ({ children }) => {
 
   const register = async (userData) => {
     try {
-      const response = await authAPI.register(userData)
+      const payload = {
+        ...userData,
+        fullName: userData.fullName || userData.name,
+      }
+      const response = await authAPI.register(payload)
       const { token: newToken, ...userInfo } = response.data
       setToken(newToken)
       localStorage.setItem('token', newToken)
