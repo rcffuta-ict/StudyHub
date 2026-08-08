@@ -8,7 +8,7 @@ import Layout from '../components/Layout'
 import LoadingSpinner from '../components/LoadingSpinner'
 
 const FIRST_SEM_DATE = new Date('2026-03-02T00:00:00.000Z')
-const SECOND_SEM_DATE = new Date('2026-08-17T00:00:00.000Z')
+const SECOND_SEM_DATE = new Date('2026-08-22T23:59:59.000Z')
 
 const Dashboard = () => {
   const { user, loading: authLoading } = useAuth()
@@ -159,10 +159,10 @@ const Dashboard = () => {
             <div className="absolute -right-20 -top-20 w-60 h-60 bg-white/5 rounded-full blur-3xl pointer-events-none" />
             <div className="relative z-10">
               <h2 className="text-2xl md:text-3xl font-black font-heading tracking-tight">
-                Upcoming Semester Exam
+                Semester Exams Period
               </h2>
               <p className="text-purple-200 mt-1.5 font-bold text-xs uppercase tracking-widest">
-                {academicSeason === 'second-semester' ? 'Second Semester Exams' : 'First Semester Exams'} begins in...
+                {academicSeason === 'second-semester' ? 'Second Semester Exams' : 'First Semester Exams'} end in...
               </p>
             </div>
             <div className="w-full md:w-auto relative z-10">

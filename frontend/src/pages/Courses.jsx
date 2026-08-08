@@ -228,7 +228,7 @@ const Courses = () => {
         </div>
 
         {/* ── Filter / Search Bar ── */}
-        <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-4 space-y-3 md:space-y-0 md:flex md:items-center md:justify-between gap-4">
+        <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-4 flex flex-col md:flex-row md:items-center md:justify-between gap-4 md:gap-6">
           <div className="relative flex-1 max-w-md">
             <input
               type="text"

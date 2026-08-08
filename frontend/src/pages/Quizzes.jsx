@@ -105,38 +105,7 @@ const Quizzes = () => {
 
   const handleStartCbt = (e) => {
     e.preventDefault()
-
-    if (!selectedCourse) {
-      toast.error('Please select an examination course')
-      return
-    }
-
-    // Guest Restriction Check
-    if (user?.isGuest) {
-      const guestCount = parseInt(localStorage.getItem('studyhub_guest_cbt_count') || '0')
-      if (guestCount >= 1) {
-        setRestrictAction('take unlimited CBT mock exams')
-        setIsRestrictModalOpen(true)
-        return
-      }
-    }
-
-    let sourcePool = academicQuestions
-    if (selectedCourse === 'tech-news') {
-      sourcePool = techQuestions
-    }
-
-    // Shuffle and pick 10 questions for quick simulation
-    const shuffled = [...sourcePool].sort(() => 0.5 - Math.random()).slice(0, 10)
-    
-    setQuestions(shuffled)
-    setAnswers({})
-    setCurrentQuestionIdx(0)
-    setTimeLeft(10 * 60) // 10 Minutes default
-    setStartTime(Date.now())
-    setExamActive(true)
-    setViewState('exam')
-    toast.success('Exam session initialized! Timer started.')
+    toast.error('Full CBT Examination mode is currently under development and coming soon!')
   }
 
   const handleSelectOption = (questionId, optionIdx) => {
@@ -232,23 +201,24 @@ const Quizzes = () => {
                 <div className="flex items-center gap-2">
                   <span className="font-extrabold tracking-wider text-sm sm:text-base">PRE-CBT PRACTICE SIMULATOR</span>
                 </div>
-                <span className="text-xs bg-purple-100 text-purple-brand px-2 py-0.5 rounded font-bold">SIMULATION ENGINE</span>
+                <span className="text-xs bg-amber-100 text-amber-800 px-2.5 py-0.5 rounded font-bold">COMING SOON</span>
               </div>
 
               <form onSubmit={handleStartCbt} className="p-6 space-y-5 bg-white">
-                <div className="bg-purple-50 border-l-4 border-purple-brand p-4 text-sm text-purple-900">
-                  <p className="font-semibold">Important Instruction:</p>
-                  <p className="mt-1">Please enter your matriculation details and select a course below to simulate FUTA's CBT environment. Guest users are limited to 1 trial exam.</p>
+                <div className="bg-amber-50 border-l-4 border-amber-400 p-4 text-sm text-amber-900 rounded-r-lg">
+                  <p className="font-semibold">Full CBT Exam Mode Coming Soon</p>
+                  <p className="mt-1 text-xs text-amber-800">Direct course-based CBT exam simulation is under development. Currently, interactive practice questions and video tutorial notes are available in your Courses section.</p>
                 </div>
 
                 <div>
                   <label className="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-1">Matriculation Number / Username</label>
                   <input
                     type="text"
+                    disabled
                     placeholder="e.g. CPT/19/4021"
                     value={matricNo}
                     onChange={(e) => setMatricNo(e.target.value)}
-                    className="w-full px-4 py-2.5 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 font-mono"
+                    className="w-full px-4 py-2.5 text-sm border border-gray-200 bg-gray-50 text-gray-400 rounded-lg focus:outline-none font-mono cursor-not-allowed"
                   />
                   <p className="text-[11px] text-gray-400 mt-1">Optional for practice mode. Stored only in local session memory.</p>
                 </div>
@@ -256,10 +226,10 @@ const Quizzes = () => {
                 <div>
                   <label className="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-1">Select Examination Course *</label>
                   <select
+                    disabled
                     value={selectedCourse}
                     onChange={(e) => setSelectedCourse(e.target.value)}
-                    className="w-full px-4 py-2.5 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 bg-white font-semibold"
-                    required
+                    className="w-full px-4 py-2.5 text-sm border border-gray-200 bg-gray-50 text-gray-400 rounded-lg focus:outline-none font-semibold cursor-not-allowed"
                   >
                     <option value="">-- Choose Course for Practice --</option>
                     <option value="MTH 101 – Calculus & Algebra">MTH 101 – Calculus & Algebra (100L)</option>
@@ -279,10 +249,12 @@ const Quizzes = () => {
                   </div>
 
                   <button
-                    type="submit"
-                    className="w-full sm:w-auto px-6 py-3 btn-purple text-white font-extrabold text-sm rounded-xl hover:bg-purple-700 transition-all shadow-md active:scale-95"
+                    type="button"
+                    disabled
+                    className="w-full sm:w-auto px-6 py-3 bg-gray-200 text-gray-400 font-extrabold text-sm rounded-xl cursor-not-allowed border border-gray-300 flex items-center justify-center gap-2 shadow-none opacity-90"
                   >
-                    Launch Examination →
+                    <span>Launch Examination</span>
+                    <span className="bg-amber-100 text-amber-800 text-[10px] uppercase font-black px-2 py-0.5 rounded-md border border-amber-200">Coming Soon</span>
                   </button>
                 </div>
               </form>

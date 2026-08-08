@@ -363,7 +363,7 @@ const Library = () => {
         )}
 
         {/* Filter Controls Bar */}
-        <div className="bg-white rounded-xl shadow-sm p-4 border border-gray-200 mb-6 space-y-4 sm:space-y-0 sm:flex sm:items-center sm:justify-between gap-4">
+        <div className="bg-white rounded-xl shadow-sm p-4 sm:p-5 border border-gray-200 mb-8 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-5 sm:gap-6">
           <div className="flex-1 max-w-md">
             <div className="relative">
               <input
@@ -371,7 +371,7 @@ const Library = () => {
                 placeholder="Search course code or title..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-full pl-9 pr-4 py-2 text-xs border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500"
+                className="w-full pl-9 pr-4 py-2 text-xs border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500/40 focus:border-[#4B2E83] transition-all"
               />
               <svg className="w-4 h-4 text-gray-400 absolute left-3 top-2.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
@@ -379,13 +379,13 @@ const Library = () => {
             </div>
           </div>
 
-          <div className="flex items-center gap-3 overflow-x-auto pb-1 sm:pb-0">
+          <div className="flex items-center gap-3 sm:gap-4 overflow-x-auto pb-1 sm:pb-0 pt-1 sm:pt-0">
             <div className="flex items-center gap-1.5 shrink-0">
               <label className="text-xs font-bold text-gray-500">Type:</label>
               <select
                 value={typeFilter}
                 onChange={(e) => setTypeFilter(e.target.value)}
-                className="px-3 py-1.5 text-xs border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 bg-white font-semibold"
+                className="px-3 py-1.5 text-xs border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500/40 focus:border-[#4B2E83] bg-white font-semibold transition-all"
               >
                 <option value="all">All Types</option>
                 <option value="past-question">Past Questions</option>
@@ -399,7 +399,7 @@ const Library = () => {
               <select
                 value={levelFilter}
                 onChange={(e) => setLevelFilter(e.target.value)}
-                className="px-3 py-1.5 text-xs border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 bg-white font-semibold"
+                className="px-3 py-1.5 text-xs border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500/40 focus:border-[#4B2E83] bg-white font-semibold transition-all"
               >
                 <option value="all">All Levels</option>
                 <option value="100">100 Level</option>

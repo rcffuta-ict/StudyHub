@@ -169,7 +169,7 @@ const Layout = ({ children }) => {
         className={`
           fixed md:static inset-y-0 left-0 z-50
           ${sidebarCollapsed ? 'w-20' : 'w-64'} bg-white border-r border-gray-200
-          transform transition-all duration-300 ease-in-out
+          transform transition-transform duration-200 ease-out
           ${sidebarOpen ? 'translate-x-0' : '-translate-x-full md:translate-x-0'}
         `}
       >
@@ -257,7 +257,7 @@ const Layout = ({ children }) => {
             {/* Mobile Menu Button */}
             <button
               onClick={() => setSidebarOpen(!sidebarOpen)}
-              className="md:hidden p-2 text-gray-600 hover:bg-gray-100 rounded-lg"
+              className="md:hidden p-2 text-gray-700 hover:bg-gray-100 active:bg-gray-200 rounded-xl transition-colors duration-150"
               aria-label="Toggle menu"
             >
               <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">

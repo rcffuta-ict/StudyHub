@@ -250,7 +250,7 @@ const Home = () => {
 
         {/* ── FLOATING FROSTED GLASS NAVBAR ── */}
         <header
-          className={`fixed top-4 sm:top-6 left-4 right-4 py-3 sm:left-6 sm:right-6 lg:left-10 lg:right-10 max-w-7xl mx-auto z-50 ${mobileMenuOpen ? 'rounded-3xl' : 'rounded-full'} bg-white/50 border border-white/50 shadow-[0_8px_25px_rgba(107,70,193,0.18)] transition-all duration-300`}
+          className={`fixed top-4 sm:top-6 left-4 right-4 py-3 sm:left-6 sm:right-6 lg:left-10 lg:right-10 max-w-7xl mx-auto z-50 ${mobileMenuOpen ? 'rounded-3xl' : 'rounded-full'} bg-white/50 border border-white/50 shadow-[0_8px_25px_rgba(107,70,193,0.18)] transition-[max-height,opacity] duration-150 ease-out`}
           style={{ backdropFilter: 'blur(16px)', WebkitBackdropFilter: 'blur(16px)' }}
         >
           <div className="px-4 sm:px-6 lg:px-8 h-12 sm:h-13 flex items-center justify-between gap-4 sm:gap-6">
@@ -297,7 +297,7 @@ const Home = () => {
                 </>
               )}
               <button
-                className="md:hidden ml-1 p-1.5 rounded-full text-[#4B2E83] hover:bg-[#4B2E83]/10 transition-colors"
+                className="md:hidden ml-1 p-2 rounded-3xl text-[#4B2E83] hover:bg-[#4B2E83]/10 active:bg-[#4B2E83]/20 transition-colors duration-150"
                 onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
                 aria-label="Toggle menu"
               >
@@ -309,7 +309,7 @@ const Home = () => {
           </div>
 
           {mobileMenuOpen && (
-            <div className="md:hidden border-t border-white/20 px-4 py-3 mt-3 space-y-1">
+            <div className="md:hidden border-t border-white/20 px-3 py-3 mt-3 space-y-1 animate-in fade-in slide-in-from-top-2 duration-150">
               {[
                 { label: 'Live Exam Hub', href: '#exam-hub' },
                 { label: 'Interactive Tools', href: '#demos' },
