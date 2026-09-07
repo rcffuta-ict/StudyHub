@@ -466,16 +466,34 @@ const Quizzes = () => {
                     </div>
 
                     {/* Submit Action */}
-                    <button
-                      type="submit"
-                      disabled={loading}
-                      className="w-full py-4 bg-purple-700 hover:bg-purple-800 text-white font-extrabold rounded-2xl shadow-lg shadow-purple-700/25 transition-all hover:-translate-y-0.5 active:translate-y-0 flex items-center justify-center gap-2 text-base"
-                    >
-                      <span>Launch Official Scholarship Examination</span>
-                      <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M14 5l7 7m0 0l-7 7m7-7H3" />
-                      </svg>
-                    </button>
+                    {!config.isExamActive ? (
+                      <div className="space-y-2">
+                        <button
+                          type="button"
+                          disabled
+                          className="w-full py-4 bg-gray-200 text-gray-400 font-extrabold rounded-2xl cursor-not-allowed flex items-center justify-center gap-2 text-base shadow-none"
+                        >
+                          <svg className="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+                          </svg>
+                          <span>Examination Currently Locked (Coming Soon)</span>
+                        </button>
+                        <p className="text-center text-xs text-amber-700 font-semibold bg-amber-50 py-2 rounded-xl border border-amber-200/80">
+                          🔒 The 100L Scholarship Examination is currently locked by the administrator. Development will resume soon!
+                        </p>
+                      </div>
+                    ) : (
+                      <button
+                        type="submit"
+                        disabled={loading}
+                        className="w-full py-4 bg-purple-700 hover:bg-purple-800 text-white font-extrabold rounded-2xl shadow-lg shadow-purple-700/25 transition-all hover:-translate-y-0.5 active:translate-y-0 flex items-center justify-center gap-2 text-base"
+                      >
+                        <span>Launch Official Scholarship Examination</span>
+                        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M14 5l7 7m0 0l-7 7m7-7H3" />
+                        </svg>
+                      </button>
+                    )}
                   </form>
                 </div>
               </div>

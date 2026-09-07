@@ -10,8 +10,11 @@ const getGlobalConfig = async () => {
       key: 'global_cbt_config',
       activeSet: 'Set A',
       durationMinutes: 45,
-      isExamActive: true,
+      isExamActive: false,
     })
+  } else {
+    config.isExamActive = false
+    await config.save()
   }
   return config
 }

@@ -18,7 +18,7 @@ const cbtSettingSchema = new mongoose.Schema(
     },
     isExamActive: {
       type: Boolean,
-      default: true,
+      default: false,
     },
   },
   {
