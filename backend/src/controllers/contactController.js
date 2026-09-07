@@ -53,7 +53,7 @@ export const updateMessageStatus = async (req, res, next) => {
     const contact = await Contact.findByIdAndUpdate(
       req.params.id,
       { status },
-      { new: true }
+      { returnDocument: 'after' }
     )
 
     if (!contact) {

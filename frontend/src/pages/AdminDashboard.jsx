@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
-import { adminAPI, dashboardAPI } from '../services/api'
+import { adminAPI, dashboardAPI, cbtAPI } from '../services/api'
 import toast from 'react-hot-toast'
 import AdminLayout from '../components/AdminLayout'
 import LoadingSpinner from '../components/LoadingSpinner'
@@ -25,6 +25,88 @@ const AdminDashboard = () => {
   const [messageFilter, setMessageFilter] = useState('all')
   const [msgPage, setMsgPage] = useState(1)
   const msgPerPage = 4
+
+  // CBT Scholarship States
+  const [cbtSubmissions, setCbtSubmissions] = useState([])
+  const [cbtConfig, setCbtConfig] = useState({ activeSet: 'Set A', durationMinutes: 45, isExamActive: true })
+  const [loadingCbt, setLoadingCbt] = useState(false)
+
+  const fetchCbtLeaderboard = async () => {
+    try {
+      setLoadingCbt(true)
+      const res = await cbtAPI.getLeaderboard()
+      if (res.data.success) {
+        setCbtSubmissions(res.data.submissions || [])
+        if (res.data.config) setCbtConfig(res.data.config)
+      }
+    } catch (error) {
+      console.error('CBT Leaderboard error:', error)
+    } finally {
+      setLoadingCbt(false)
+    }
+  }
+
+  useEffect(() => {
+    fetchCbtLeaderboard()
+  }, [])
+
+  const handleUpdateCbtSettings = async (newSettings) => {
+    try {
+      const res = await cbtAPI.updateSettings(newSettings)
+      if (res.data.success) {
+        setCbtConfig(res.data.config)
+        toast.success('CBT Exam Settings Updated!')
+      }
+    } catch (error) {
+      toast.error('Failed to update CBT settings.')
+    }
+  }
+
+  const handleResetCbtAttempt = async (id, studentName) => {
+    if (!window.confirm(`Are you sure you want to reset the attempt for ${studentName}? This will delete their score and allow a retake.`)) return
+    try {
+      const res = await cbtAPI.resetAttempt(id)
+      if (res.data.success) {
+        toast.success(res.data.message)
+        fetchCbtLeaderboard()
+      }
+    } catch (error) {
+      toast.error('Failed to reset attempt.')
+    }
+  }
+
+  const handleExportCbtCsv = () => {
+    if (cbtSubmissions.length === 0) return toast.error('No submissions to export.')
+    
+    const headers = ['Rank', 'Surname', 'Firstname', 'Email', 'Matric Number', 'Department', 'Faculty', 'Combination', 'Question Set', 'Score', 'Total Questions', 'Percentage', 'Time Spent (s)', 'Status', 'Submitted Date']
+    const rows = cbtSubmissions.map((sub, idx) => [
+      idx + 1,
+      `"${sub.surname || ''}"`,
+      `"${sub.firstname || ''}"`,
+      `"${sub.email || ''}"`,
+      `"${sub.matricNumber || ''}"`,
+      `"${sub.department || ''}"`,
+      `"${sub.faculty || ''}"`,
+      sub.combination,
+      sub.questionSet,
+      sub.score,
+      sub.totalQuestions,
+      `${sub.percentage}%`,
+      sub.timeSpentSeconds,
+      sub.status,
+      sub.submittedAt ? new Date(sub.submittedAt).toLocaleString() : ''
+    ])
+
+    const csvContent = 'data:text/csv;charset=utf-8,' + [headers.join(','), ...rows.map(e => e.join(','))].join('\n')
+    const encodedUri = encodeURI(csvContent)
+    const link = document.createElement('a')
+    link.setAttribute('href', encodedUri)
+    link.setAttribute('download', `100L_Scholarship_CBT_Results_${new Date().toISOString().split('T')[0]}.csv`)
+    document.body.appendChild(link)
+    link.click()
+    document.body.removeChild(link)
+    toast.success('Leaderboard CSV exported successfully!')
+  }
 
   useEffect(() => {
     const fetchAcademicSeason = async () => {
@@ -337,6 +419,167 @@ const AdminDashboard = () => {
               </button>
             ))}
           </div>
+        </div>
+
+        {/* 100L Scholarship CBT Management Panel */}
+        <div className="mb-6 bg-white rounded-lg shadow-sm p-6 border border-gray-200">
+          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-4 pb-4 border-b border-gray-100">
+            <div>
+              <div className="flex items-center gap-2">
+                <h2 className="text-xl font-bold">100L Fellowship Alumni CBT Exam Controls</h2>
+                <span className="bg-purple-100 text-purple-800 text-xs font-bold px-2.5 py-0.5 rounded-full">
+                  {cbtSubmissions.length} Submissions
+                </span>
+              </div>
+              <p className="text-sm text-gray-500">Manage exam duration, set pools (Set A vs Set B), and view/export student leaderboard rankings.</p>
+            </div>
+
+            <div className="flex items-center gap-2">
+              <button
+                type="button"
+                onClick={fetchCbtLeaderboard}
+                className="px-3.5 py-2 bg-gray-100 text-gray-700 text-xs font-bold rounded-lg hover:bg-gray-200 transition-colors"
+              >
+                Refresh Board
+              </button>
+              <button
+                type="button"
+                onClick={handleExportCbtCsv}
+                className="px-4 py-2 bg-purple-brand text-white text-xs font-bold rounded-lg hover:bg-purple-800 shadow-sm transition-all"
+              >
+                Export CSV Results
+              </button>
+            </div>
+          </div>
+
+          {/* Config Controls */}
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6 p-4 bg-purple-50/50 rounded-xl border border-purple-100">
+            {/* Active Question Set Toggle */}
+            <div>
+              <label className="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-1.5">
+                Active Question Pool (Damage Control)
+              </label>
+              <div className="flex gap-2">
+                {['Set A', 'Set B'].map((set) => (
+                  <button
+                    key={set}
+                    type="button"
+                    onClick={() => handleUpdateCbtSettings({ activeSet: set })}
+                    className={`flex-1 py-2 text-xs font-bold rounded-lg border transition-all ${
+                      cbtConfig.activeSet === set
+                        ? 'bg-purple-brand text-white border-purple-brand shadow-xs'
+                        : 'bg-white text-gray-700 border-gray-200 hover:bg-gray-50'
+                    }`}
+                  >
+                    {set} {set === 'Set B' ? '(Backup Pool)' : '(Primary Pool)'}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {/* Exam Duration Control */}
+            <div>
+              <label className="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-1.5">
+                Exam Duration (Minutes)
+              </label>
+              <div className="flex gap-2">
+                <input
+                  type="number"
+                  min="5"
+                  max="180"
+                  value={cbtConfig.durationMinutes || 45}
+                  onChange={(e) => setCbtConfig({ ...cbtConfig, durationMinutes: parseInt(e.target.value) || 45 })}
+                  className="w-24 px-3 py-1.5 bg-white border border-gray-300 rounded-lg text-xs font-bold text-gray-900"
+                />
+                <button
+                  type="button"
+                  onClick={() => handleUpdateCbtSettings({ durationMinutes: Number(cbtConfig.durationMinutes) })}
+                  className="px-3.5 py-1.5 bg-purple-brand text-white text-xs font-bold rounded-lg hover:bg-purple-800"
+                >
+                  Save Duration
+                </button>
+              </div>
+            </div>
+
+            {/* Exam Active Toggle */}
+            <div>
+              <label className="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-1.5">
+                Exam Active Status
+              </label>
+              <button
+                type="button"
+                onClick={() => handleUpdateCbtSettings({ isExamActive: !cbtConfig.isExamActive })}
+                className={`w-full py-2 text-xs font-bold rounded-lg border transition-all ${
+                  cbtConfig.isExamActive
+                    ? 'bg-emerald-600 text-white border-emerald-600'
+                    : 'bg-rose-600 text-white border-rose-600'
+                }`}
+              >
+                {cbtConfig.isExamActive ? '🟢 Exam Active (Students Can Take)' : '🔴 Exam Paused'}
+              </button>
+            </div>
+          </div>
+
+          {/* Submissions Leaderboard Table */}
+          {loadingCbt ? (
+            <div className="py-8 text-center text-xs text-gray-500">Loading Candidate Submissions...</div>
+          ) : cbtSubmissions.length === 0 ? (
+            <div className="py-8 text-center text-xs text-gray-500 bg-gray-50 rounded-xl border border-gray-200">
+              No exam submissions recorded yet.
+            </div>
+          ) : (
+            <div className="overflow-x-auto border border-gray-200 rounded-xl">
+              <table className="w-full text-left text-xs">
+                <thead className="bg-gray-50 text-gray-600 uppercase font-bold text-[10px] tracking-wider border-b border-gray-200">
+                  <tr>
+                    <th className="p-3">Rank</th>
+                    <th className="p-3">Candidate</th>
+                    <th className="p-3">Matric No</th>
+                    <th className="p-3">Dept &amp; Faculty</th>
+                    <th className="p-3">Combo</th>
+                    <th className="p-3">Score</th>
+                    <th className="p-3">Pct</th>
+                    <th className="p-3">Time</th>
+                    <th className="p-3">Status</th>
+                    <th className="p-3">Action</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-gray-100 font-semibold text-gray-800">
+                  {cbtSubmissions.map((sub, idx) => (
+                    <tr key={sub._id} className="hover:bg-gray-50/80 transition-colors">
+                      <td className="p-3 font-extrabold text-purple-900">#{idx + 1}</td>
+                      <td className="p-3">
+                        <div className="font-bold text-gray-900">{sub.firstname} {sub.surname}</div>
+                        <div className="text-[10px] text-gray-400 font-normal">{sub.email}</div>
+                      </td>
+                      <td className="p-3 font-mono font-bold text-gray-900 uppercase">{sub.matricNumber}</td>
+                      <td className="p-3 max-w-[150px] truncate">{sub.department}</td>
+                      <td className="p-3"><span className="px-2 py-0.5 bg-purple-100 text-purple-800 rounded font-bold">{sub.combination}</span></td>
+                      <td className="p-3 font-extrabold text-gray-900">{sub.score} / {sub.totalQuestions}</td>
+                      <td className="p-3 font-bold text-emerald-700">{sub.percentage}%</td>
+                      <td className="p-3">{Math.floor((sub.timeSpentSeconds || 0) / 60)}m {(sub.timeSpentSeconds || 0) % 60}s</td>
+                      <td className="p-3">
+                        <span className={`px-2 py-0.5 rounded text-[10px] uppercase font-extrabold ${
+                          sub.status === 'completed' ? 'bg-emerald-100 text-emerald-800' : 'bg-amber-100 text-amber-800'
+                        }`}>
+                          {sub.status}
+                        </span>
+                      </td>
+                      <td className="p-3">
+                        <button
+                          type="button"
+                          onClick={() => handleResetCbtAttempt(sub._id, `${sub.firstname} ${sub.surname}`)}
+                          className="px-2.5 py-1 bg-red-50 text-red-600 hover:bg-red-100 text-[10px] font-bold rounded border border-red-200 transition-colors"
+                        >
+                          Reset
+                        </button>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
         </div>
 
         {/* Contact Messages Section */}

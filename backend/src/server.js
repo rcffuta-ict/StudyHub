@@ -17,6 +17,7 @@ import progressRoutes from './routes/progressRoutes.js'
 import aiRoutes from './routes/aiRoutes.js'
 import libraryRoutes from './routes/libraryRoutes.js'
 import contactRoutes from './routes/contactRoutes.js'
+import cbtRoutes from './routes/cbtRoutes.js'
 
 // Load environment variables
 dotenv.config()
@@ -66,6 +67,7 @@ app.use('/api/progress', progressRoutes)
 app.use('/api/ai', aiRoutes)
 app.use('/api/library', libraryRoutes)
 app.use('/api/contact', contactRoutes)
+app.use('/api/cbt', cbtRoutes)
 
 // Health check
 app.get('/api/health', (req, res) => {

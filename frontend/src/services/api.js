@@ -129,4 +129,15 @@ export const contactAPI = {
   submitMessage: (data) => api.post('/contact', data),
 }
 
+// CBT Exam API
+export const cbtAPI = {
+  getStatus: () => api.get('/cbt/status'),
+  startExam: (data) => api.post('/cbt/start', data),
+  syncDraft: (answers) => api.post('/cbt/sync-draft', { answers }),
+  submitExam: (answers) => api.post('/cbt/submit', { answers }),
+  getLeaderboard: () => api.get('/cbt/admin/leaderboard'),
+  updateSettings: (data) => api.put('/cbt/admin/settings', data),
+  resetAttempt: (id) => api.delete(`/cbt/admin/reset-attempt/${id}`),
+}
+
 export default api

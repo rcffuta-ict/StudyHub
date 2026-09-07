@@ -67,7 +67,7 @@ export const generateCourseAccessToken = async (req, res) => {
     await Course.findByIdAndUpdate(
       courseId,
       { adminAccessToken: token },
-      { new: true }
+      { returnDocument: 'after' }
     )
 
     res.json({ 
@@ -625,7 +625,7 @@ export const updateCourse = async (req, res) => {
     const updatedCourse = await Course.findByIdAndUpdate(
       courseId,
       updateData,
-      { new: true, runValidators: true }
+      { returnDocument: 'after', runValidators: true }
     )
 
     res.json({

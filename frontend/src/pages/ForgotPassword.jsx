@@ -63,7 +63,7 @@ const ForgotPassword = () => {
               Trouble Logging In?
             </h2>
             <p className="text-sm xl:text-base text-white/80 font-medium leading-relaxed">
-              Don't worry! Enter your registered university email and we will send you a 6-digit OTP code to safely reset your password.
+              Don't worry! Enter your registered email and we will send you a 6-digit OTP code to safely reset your password.
             </p>
 
             <div className="pt-4 grid grid-cols-1 gap-3">

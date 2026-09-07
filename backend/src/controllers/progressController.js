@@ -17,7 +17,7 @@ export const markVideoComplete = async (req, res) => {
         completedAt: new Date(),
         lastWatchedAt: new Date()
       },
-      { upsert: true, new: true }
+      { upsert: true, returnDocument: 'after' }
     )
 
     // Update course enrollment progress
@@ -43,7 +43,7 @@ export const updateWatchTime = async (req, res) => {
         watchTime,
         lastWatchedAt: new Date()
       },
-      { upsert: true, new: true }
+      { upsert: true, returnDocument: 'after' }
     )
 
     res.json({ success: true })
@@ -65,7 +65,7 @@ export const trackVideoWatch = async (req, res) => {
         topicId,
         lastWatchedAt: new Date()
       },
-      { upsert: true, new: true }
+      { upsert: true, returnDocument: 'after' }
     )
 
     res.json({ success: true })
