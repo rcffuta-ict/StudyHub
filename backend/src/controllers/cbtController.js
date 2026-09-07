@@ -34,13 +34,14 @@ export const getStatus = async (req, res) => {
     }
 
     // 2. Check 100-Level eligibility
-    const levelStr = String(user.level || '').trim()
-    if (levelStr !== '100') {
+    const levelStr = String(user.level || '').trim().toLowerCase()
+    const is100L = levelStr.includes('100')
+    if (!is100L) {
       return res.json({
         eligible: false,
         isGuest: false,
         reason: 'non_100l',
-        message: `This assessment is restricted to 100-Level students. Your profile level is set to ${levelStr || 'unspecified'}.`,
+        message: `This assessment is restricted to 100-Level students. Your profile level is set to ${user.level || 'unspecified'}.`,
       })
     }
 
@@ -126,8 +127,9 @@ export const startExam = async (req, res) => {
       return res.status(403).json({ message: 'Guests cannot take the official scholarship exam.' })
     }
 
-    const levelStr = String(user.level || '').trim()
-    if (levelStr !== '100') {
+    const levelStr = String(user.level || '').trim().toLowerCase()
+    const is100L = levelStr.includes('100')
+    if (!is100L) {
       return res.status(403).json({ message: 'Only 100-Level students can participate in this exam.' })
     }
 
