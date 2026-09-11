@@ -30,7 +30,7 @@ const Quizzes = () => {
   const [viewState, setViewState] = useState('setup') // 'setup', 'exam', 'result'
   const [questions, setQuestions] = useState([])
   const [activeSubject, setActiveSubject] = useState('')
-  const [activeSubtopicId, setActiveSubtopicId] = useState(1)
+  const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0)
   const [answers, setAnswers] = useState({})
   const [timeLeft, setTimeLeft] = useState(0)
   const [isSubmitting, setIsSubmitting] = useState(false)
@@ -139,11 +139,11 @@ const Quizzes = () => {
         setQuestions(res.data.questions)
         const activeSubj = subData.combination === 'PCB' ? 'Physics' : 'Mathematics'
         setActiveSubject(activeSubj)
-        setActiveSubtopicId(1)
 
         const savedAnswers = subData.answers ? (subData.answers instanceof Map ? Object.fromEntries(subData.answers) : subData.answers) : {}
         setAnswers(savedAnswers)
         setTimeLeft(res.data.remainingSeconds || initialRemainingSecs)
+        setCurrentQuestionIndex(firstIndexForSubject(res.data.questions, activeSubj, savedAnswers))
 
         setViewState('exam')
         toast.success('Resumed your active scholarship exam session!')
@@ -159,8 +159,8 @@ const Quizzes = () => {
   const handleStartExam = async (e) => {
     e.preventDefault()
 
-    if (!matricNumber.trim()) {
-      return toast.error('Please enter your Matriculation Number to begin.')
+    if (!matricTouched || !isMatricValid) {
+      return toast.error('Please enter a valid Matriculation Number (e.g., EEE/2026/1001) to begin.')
     }
 
     setLoading(true)
@@ -178,10 +178,10 @@ const Quizzes = () => {
 
         const defaultSubj = combination === 'PCB' ? 'Physics' : 'Mathematics'
         setActiveSubject(defaultSubj)
-        setActiveSubtopicId(1)
 
         setAnswers({})
         setTimeLeft(res.data.remainingSeconds || (res.data.durationMinutes || 45) * 60)
+        setCurrentQuestionIndex(0)
         setViewState('exam')
         toast.success('Scholarship Assessment Started! Good luck!')
       }
@@ -263,32 +263,38 @@ const Quizzes = () => {
     return `${hrs.toString().padStart(2, '0')}:${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`
   }
 
+  const MATRIC_REGEX = /^[A-Z]{2,4}\/\d{4}\/\d{3,4}$/
+  const isMatricValid = MATRIC_REGEX.test(matricNumber.trim())
+  const matricTouched = !matricNumber.trim() || isMatricValid
+
   const getSubjectList = () => {
     return combination === 'PCB' ? ['Physics', 'Chemistry', 'Biology'] : ['Mathematics', 'Physics', 'Chemistry']
   }
 
-  const getSubtopicName = (subject, subId) => {
-    const topics = {
-      Mathematics: ['1. Geometry', '2. Algebra', '3. Set Theory', '4. Trigonometry', '5. Probability & Statistics'],
-      Biology: ['1. Nutrition', '2. Genetics', '3. Ecology', '4. Animal Biology', '5. Plant Biology'],
-      Physics: ['1. Classical Mechanics', '2. Heat & Energy', '3. Waves', '4. Electricity & Magnetism', '5. Modern Physics'],
-      Chemistry: ['1. Basic Chemistry', '2. Inorganic Chemistry', '3. Physical Chemistry', '4. Organic Chemistry', '5. Radioactivity'],
-    }
-    return topics[subject]?.[subId - 1] || `Topic ${subId}`
+  // Ordered question list (server returns subject → subsection → id sorted)
+  const orderedQuestions = questions
+  const activeQuestion = orderedQuestions[currentQuestionIndex] || null
+
+  const firstIndexForSubject = (questionList, targetSubject, answerMap) => {
+    const list = questionList || []
+    const answerRef = answerMap || answers
+    const firstUnanswered = list.findIndex((q) => q.subject === targetSubject && !answerRef[q._id])
+    if (firstUnanswered !== -1) return firstUnanswered
+    const any = list.findIndex((q) => q.subject === targetSubject)
+    return any === -1 ? 0 : any
   }
 
-  const activeQuestions = questions.filter(
-    (q) => q.subject === activeSubject && Number(q.subsection_id) === Number(activeSubtopicId)
-  )
+  const goToSubject = (subj) => {
+    setActiveSubject(subj)
+    setCurrentQuestionIndex(firstIndexForSubject(orderedQuestions, subj, answers))
+  }
+
+  const goPrevQuestion = () => setCurrentQuestionIndex((i) => Math.max(0, i - 1))
+  const goNextQuestion = () => setCurrentQuestionIndex((i) => Math.min(orderedQuestions.length - 1, i + 1))
 
   const countAnsweredForSubject = (subj) => {
     const subjQs = questions.filter((q) => q.subject === subj)
     return subjQs.filter((q) => answers[q._id]).length
-  }
-
-  const countAnsweredForSubtopic = (subj, subId) => {
-    const subQs = questions.filter((q) => q.subject === subj && Number(q.subsection_id) === Number(subId))
-    return subQs.filter((q) => answers[q._id]).length
   }
 
   const totalAnsweredCount = Object.keys(answers).length
@@ -445,9 +451,17 @@ const Quizzes = () => {
                         placeholder="e.g. EEE/2026/1001"
                         value={matricNumber}
                         onChange={(e) => setMatricNumber(e.target.value.toUpperCase())}
-                        className="w-full px-4 py-3 border border-gray-300 rounded-xl text-sm font-bold text-gray-900 placeholder:text-gray-400 focus:outline-none focus:border-purple-600 focus:ring-4 focus:ring-purple-600/10 uppercase tracking-wider"
+                        className={`w-full px-4 py-3 border rounded-xl text-sm font-bold text-gray-900 placeholder:text-gray-400 focus:outline-none focus:ring-4 uppercase tracking-wider ${
+                          !matricTouched
+                            ? 'border-red-400 bg-red-50/50 focus:border-red-500 focus:ring-red-500/10'
+                            : 'border-gray-300 focus:border-purple-600 focus:ring-purple-600/10'
+                        }`}
                       />
-                      <p className="text-[11px] text-gray-400 mt-1">This serves as your unique candidate identifier for official score ranking.</p>
+                      <p className={`text-[11px] mt-1 font-semibold ${!matricTouched ? 'text-red-600' : 'text-gray-400'}`}>
+                        {!matricTouched
+                          ? 'Invalid format. Use e.g. EEE/2026/1001 (dept code / year / number).'
+                          : 'Format: e.g. EEE/2026/1001. This serves as your unique candidate identifier for official score ranking.'}
+                      </p>
                     </div>
 
                     {/* Rules Summary */}
@@ -485,10 +499,14 @@ const Quizzes = () => {
                     ) : (
                       <button
                         type="submit"
-                        disabled={loading}
-                        className="w-full py-4 bg-purple-700 hover:bg-purple-800 text-white font-extrabold rounded-2xl shadow-lg shadow-purple-700/25 transition-all hover:-translate-y-0.5 active:translate-y-0 flex items-center justify-center gap-2 text-base"
+                        disabled={loading || !matricTouched}
+                        className={`w-full py-4 text-white font-extrabold rounded-2xl transition-all flex items-center justify-center gap-2 text-base ${
+                          loading || !matricTouched
+                            ? 'bg-gray-300 text-gray-500 cursor-not-allowed shadow-none'
+                            : 'bg-purple-700 hover:bg-purple-800 shadow-lg shadow-purple-700/25 hover:-translate-y-0.5 active:translate-y-0'
+                        }`}
                       >
-                        <span>Launch Official Scholarship Examination</span>
+                        <span>{!matricTouched ? 'Enter a valid Matriculation Number to Start' : 'Launch Official Scholarship Examination'}</span>
                         <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M14 5l7 7m0 0l-7 7m7-7H3" />
                         </svg>
@@ -538,7 +556,7 @@ const Quizzes = () => {
                       onClick={() => setShowSubmitModal(true)}
                       className="px-5 py-2.5 bg-purple-700 hover:bg-purple-800 text-white font-extrabold text-xs sm:text-sm rounded-xl shadow-md transition-all hover:scale-105 active:scale-95"
                     >
-                      Submit Exam ({totalAnsweredCount}/75)
+                      Submit Exam ({totalAnsweredCount}/{orderedQuestions.length || 75})
                     </button>
                   </div>
                 </div>
@@ -551,10 +569,7 @@ const Quizzes = () => {
                     return (
                       <button
                         key={subj}
-                        onClick={() => {
-                          setActiveSubject(subj)
-                          setActiveSubtopicId(1)
-                        }}
+                        onClick={() => goToSubject(subj)}
                         className={`px-5 py-3 rounded-2xl font-extrabold text-xs sm:text-sm transition-all shrink-0 flex items-center gap-2 ${
                           isActive
                             ? 'bg-purple-700 text-white shadow-md shadow-purple-700/20'
@@ -572,92 +587,115 @@ const Quizzes = () => {
                   })}
                 </div>
 
-                {/* Level 2: Topic Subsection Sub-tabs (T1 - T5) */}
-                <div className="grid grid-cols-2 sm:grid-cols-5 gap-2">
-                  {[1, 2, 3, 4, 5].map((subId) => {
-                    const subName = getSubtopicName(activeSubject, subId)
-                    const subAnsCount = countAnsweredForSubtopic(activeSubject, subId)
-                    const isActiveSub = Number(activeSubtopicId) === subId
-                    return (
-                      <button
-                        key={subId}
-                        onClick={() => setActiveSubtopicId(subId)}
-                        className={`p-3 rounded-xl border text-left transition-all flex flex-col justify-between ${
-                          isActiveSub
-                            ? 'border-purple-600 bg-purple-50/70 shadow-xs'
-                            : 'border-gray-200 bg-white hover:border-gray-300'
-                        }`}
-                      >
-                        <div className="flex justify-between items-center mb-1">
-                          <span className={`text-[10px] font-black uppercase tracking-wider px-1.5 py-0.5 rounded ${
-                            isActiveSub ? 'bg-purple-700 text-white' : 'bg-gray-100 text-gray-600'
-                          }`}>
-                            T{subId}
-                          </span>
-                          <span className="text-[10px] font-extrabold text-gray-500">{subAnsCount}/5</span>
-                        </div>
-                        <span className="text-xs font-bold text-gray-900 truncate">{subName.split('. ')[1] || subName}</span>
-                      </button>
-                    )
-                  })}
+                {/* Question Palette Grid (Answered vs Unanswered) */}
+                <div className="bg-white rounded-2xl border border-gray-200 p-4 sm:p-5 shadow-sm">
+                  <div className="flex flex-wrap items-center justify-between gap-2 mb-3">
+                    <h3 className="font-extrabold text-xs text-gray-900 uppercase tracking-wider">Question Palette</h3>
+                    <div className="flex items-center gap-3 text-[11px] font-bold text-gray-600">
+                      <span className="flex items-center gap-1.5"><span className="w-3 h-3 rounded bg-emerald-500 inline-block" /> Answered ({totalAnsweredCount})</span>
+                      <span className="flex items-center gap-1.5"><span className="w-3 h-3 rounded bg-purple-600 inline-block" /> Current</span>
+                      <span className="flex items-center gap-1.5"><span className="w-3 h-3 rounded bg-white border border-gray-300 inline-block" /> Unanswered ({orderedQuestions.length - totalAnsweredCount})</span>
+                    </div>
+                  </div>
+                  <div className="grid grid-cols-6 sm:grid-cols-10 md:grid-cols-15 gap-1.5">
+                    {orderedQuestions.map((q, i) => {
+                      const answered = Boolean(answers[q._id])
+                      const isCurrent = i === currentQuestionIndex
+                      return (
+                        <button
+                          key={q._id}
+                          type="button"
+                          onClick={() => setCurrentQuestionIndex(i)}
+                          title={`Q${i + 1}: ${q.subject} — ${answered ? 'Answered' : 'Unanswered'}`}
+                          className={`aspect-square rounded-lg text-[11px] font-black flex items-center justify-center border transition-all ${
+                            isCurrent
+                              ? 'bg-purple-700 text-white border-purple-800 scale-105 shadow-md shadow-purple-700/30'
+                              : answered
+                              ? 'bg-emerald-500 text-white border-emerald-600 hover:bg-emerald-600'
+                              : 'bg-white text-gray-500 border-gray-200 hover:border-purple-400 hover:text-purple-700'
+                          }`}
+                        >
+                          {i + 1}
+                        </button>
+                      )
+                    })}
+                  </div>
                 </div>
 
-                {/* Questions Container */}
+                {/* Single Active Question (One-at-a-Time, JAMB-Style) */}
                 <div className="space-y-4">
-                  {activeQuestions.length === 0 ? (
+                  {!activeQuestion ? (
                     <div className="bg-white rounded-2xl border border-gray-200 p-8 text-center text-gray-500 font-medium">
                       Loading questions for this section...
                     </div>
                   ) : (
-                    activeQuestions.map((q, idx) => {
-                      const currentChoice = answers[q._id]
-                      return (
-                        <div key={q._id} className="bg-white rounded-2xl border border-gray-200 p-5 sm:p-6 shadow-sm hover:border-purple-200 transition-colors">
-                          <div className="flex justify-between items-start mb-3 gap-3">
-                            <span className="inline-block px-3 py-1 bg-purple-50 text-purple-800 text-xs font-extrabold rounded-lg">
-                              {q.subject} • {q.subsection_name} (Q{idx + 1} of 5)
+                    <>
+                      <div className="flex items-center justify-between flex-wrap gap-2">
+                        <button
+                          type="button"
+                          onClick={goPrevQuestion}
+                          disabled={currentQuestionIndex === 0}
+                          className="px-4 py-2 rounded-xl border border-gray-200 bg-white text-xs font-extrabold text-gray-700 hover:bg-gray-50 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+                        >
+                          ← Previous
+                        </button>
+                        <span className="text-xs sm:text-sm font-extrabold text-gray-800 bg-gray-100 border border-gray-200 px-4 py-2 rounded-xl">
+                          Question {currentQuestionIndex + 1} of {orderedQuestions.length}
+                        </span>
+                        <button
+                          type="button"
+                          onClick={goNextQuestion}
+                          disabled={currentQuestionIndex === orderedQuestions.length - 1}
+                          className="px-4 py-2 rounded-xl border border-gray-200 bg-white text-xs font-extrabold text-gray-700 hover:bg-gray-50 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+                        >
+                          Next →
+                        </button>
+                      </div>
+
+                      <div className="bg-white rounded-2xl border border-gray-200 p-5 sm:p-6 shadow-sm hover:border-purple-200 transition-colors">
+                        <div className="flex justify-between items-start mb-3 gap-3">
+                          <span className="inline-block px-3 py-1 bg-purple-50 text-purple-800 text-xs font-extrabold rounded-lg">
+                            {activeQuestion.subject} • {activeQuestion.subsection_name}
+                          </span>
+                          {answers[activeQuestion._id] && (
+                            <span className="text-xs font-extrabold text-emerald-700 bg-emerald-50 border border-emerald-200 px-2.5 py-0.5 rounded-md flex items-center gap-1">
+                              ✓ Answered ({answers[activeQuestion._id]})
                             </span>
-                            {currentChoice && (
-                              <span className="text-xs font-extrabold text-emerald-700 bg-emerald-50 border border-emerald-200 px-2.5 py-0.5 rounded-md flex items-center gap-1">
-                                ✓ Answered ({currentChoice})
-                              </span>
-                            )}
-                          </div>
-
-                          <h4 className="text-sm sm:text-base font-bold text-gray-900 mb-4 leading-relaxed">
-                            {q.question_text}
-                          </h4>
-
-                          {/* Options Radio List */}
-                          <div className="grid grid-cols-1 gap-2.5">
-                            {['A', 'B', 'C', 'D'].map((optKey) => {
-                              const optionText = q.options?.[optKey]
-                              if (!optionText) return null
-                              const isSelected = currentChoice === optKey
-                              return (
-                                <button
-                                  key={optKey}
-                                  type="button"
-                                  onClick={() => handleSelectOption(q._id, optKey)}
-                                  className={`w-full p-3.5 rounded-xl border text-left text-xs sm:text-sm font-semibold transition-all flex items-start gap-3 ${
-                                    isSelected
-                                      ? 'border-purple-600 bg-purple-50/80 text-purple-950 font-bold shadow-xs'
-                                      : 'border-gray-200 bg-white hover:bg-gray-50 text-gray-800'
-                                  }`}
-                                >
-                                  <span className={`w-6 h-6 rounded-lg font-black text-xs flex items-center justify-center shrink-0 ${
-                                    isSelected ? 'bg-purple-700 text-white' : 'bg-gray-100 text-gray-600'
-                                  }`}>
-                                    {optKey}
-                                  </span>
-                                  <span className="mt-0.5 leading-snug">{optionText}</span>
-                                </button>
-                              )
-                            })}
-                          </div>
+                          )}
                         </div>
-                      )
-                    })
+
+                        <h4 className="text-sm sm:text-base font-bold text-gray-900 mb-4 leading-relaxed">
+                          {activeQuestion.question_text}
+                        </h4>
+
+                        <div className="grid grid-cols-1 gap-2.5">
+                          {['A', 'B', 'C', 'D'].map((optKey) => {
+                            const optionText = activeQuestion.options?.[optKey]
+                            if (!optionText) return null
+                            const isSelected = answers[activeQuestion._id] === optKey
+                            return (
+                              <button
+                                key={optKey}
+                                type="button"
+                                onClick={() => handleSelectOption(activeQuestion._id, optKey)}
+                                className={`w-full p-3.5 rounded-xl border text-left text-xs sm:text-sm font-semibold transition-all flex items-start gap-3 ${
+                                  isSelected
+                                    ? 'border-purple-600 bg-purple-50/80 text-purple-950 font-bold shadow-xs'
+                                    : 'border-gray-200 bg-white hover:bg-gray-50 text-gray-800'
+                                }`}
+                              >
+                                <span className={`w-6 h-6 rounded-lg font-black text-xs flex items-center justify-center shrink-0 ${
+                                  isSelected ? 'bg-purple-700 text-white' : 'bg-gray-100 text-gray-600'
+                                }`}>
+                                  {optKey}
+                                </span>
+                                <span className="mt-0.5 leading-snug">{optionText}</span>
+                              </button>
+                            )
+                          })}
+                        </div>
+                      </div>
+                    </>
                   )}
                 </div>
               </div>
@@ -693,7 +731,46 @@ const Quizzes = () => {
                       </span>
                     </div>
                   </div>
+
+                  <div className="mt-6 max-w-xl mx-auto bg-emerald-50/20 border border-emerald-300/30 rounded-2xl p-4">
+                    <p className="text-sm font-bold text-emerald-200">
+                      ✓ You have completed the scholarship examination.
+                    </p>
+                    <p className="text-xs text-purple-100/80 font-medium mt-1">
+                      Your official result has been recorded and is not eligible for a retake. Thanks for participating!
+                    </p>
+                  </div>
                 </div>
+
+                {/* Per-Subject Score Breakdown */}
+                {submission.subjectScores && Object.keys(submission.subjectScores).length > 0 && (
+                  <div className="bg-white rounded-3xl border border-gray-200 p-6 sm:p-8 shadow-sm">
+                    <div className="border-b border-gray-100 pb-4 mb-4">
+                      <h3 className="text-lg font-black text-gray-900 font-heading">Score by Subject</h3>
+                      <p className="text-xs text-gray-500 font-medium">Your performance broken down across each subject in your combination.</p>
+                    </div>
+                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                      {Object.entries(submission.subjectScores).map(([subj, s]) => (
+                        <div key={subj} className="p-4 rounded-2xl border border-gray-200 bg-gray-50/60">
+                          <div className="flex items-center justify-between mb-2">
+                            <span className="font-extrabold text-sm text-gray-900">{subj}</span>
+                            <span className={`text-xs font-black px-2 py-0.5 rounded-md ${
+                              s.correct / s.total >= 0.5 ? 'bg-emerald-100 text-emerald-800' : 'bg-amber-100 text-amber-800'
+                            }`}>
+                              {s.correct}/{s.total}
+                            </span>
+                          </div>
+                          <div className="w-full h-2 bg-gray-200 rounded-full overflow-hidden">
+                            <div
+                              className={`h-full rounded-full ${s.correct / s.total >= 0.5 ? 'bg-emerald-500' : 'bg-amber-500'}`}
+                              style={{ width: `${Math.round((s.correct / s.total) * 100)}%` }}
+                            />
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
 
                 {reviewQuestions.length > 0 && (
                   <div className="bg-white rounded-3xl border border-gray-200 p-6 sm:p-8 shadow-sm space-y-5">
@@ -870,7 +947,7 @@ const Quizzes = () => {
               <div className="text-center">
                 <h3 className="text-lg font-black text-gray-900 font-heading">Submit Examination?</h3>
                 <p className="text-xs text-gray-500 font-medium mt-1">
-                  You have answered <strong>{totalAnsweredCount}</strong> out of <strong>75</strong> questions. Are you sure you want to finish now?
+                  You have answered <strong>{totalAnsweredCount}</strong> out of <strong>{orderedQuestions.length || 75}</strong> questions. Are you sure you want to finish now?
                 </p>
               </div>
               <div className="flex gap-3 pt-2">

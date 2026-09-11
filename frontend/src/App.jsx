@@ -107,10 +107,8 @@ import { GoogleOAuthProvider } from '@react-oauth/google'
 
 const googleClientId = import.meta.env.VITE_GOOGLE_CLIENT_ID || ''
 
-function App() {
+function AppContent() {
   return (
-    <GoogleOAuthProvider clientId={googleClientId}>
-      <AuthProvider>
       <Router>
         <div className="w-full min-h-screen">
           <Toaster position="top-right" />
@@ -236,9 +234,21 @@ function App() {
           </Routes>
         </div>
       </Router>
-    </AuthProvider>
-    </GoogleOAuthProvider>
   )
+}
+
+function App() {
+  const content = <AppContent />
+
+  if (googleClientId) {
+    return (
+      <GoogleOAuthProvider clientId={googleClientId}>
+        <AuthProvider>{content}</AuthProvider>
+      </GoogleOAuthProvider>
+    )
+  }
+
+  return <AuthProvider>{content}</AuthProvider>
 }
 
 export default App

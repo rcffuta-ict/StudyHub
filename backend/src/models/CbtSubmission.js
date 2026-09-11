@@ -80,6 +80,10 @@ const cbtSubmissionSchema = new mongoose.Schema(
       of: String,
       default: {},
     },
+    subjectScores: {
+      type: mongoose.Schema.Types.Mixed,
+      default: {},
+    },
     status: {
       type: String,
       enum: ['in-progress', 'completed', 'expired'],

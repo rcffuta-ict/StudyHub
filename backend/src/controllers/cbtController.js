@@ -2,7 +2,7 @@ import CbtQuestion from '../models/CbtQuestion.js'
 import CbtSubmission from '../models/CbtSubmission.js'
 import CbtSetting from '../models/CbtSetting.js'
 
-// Helper: Get or initialize global config
+// Helper: Get or initialize global config (defaults to locked until admin enables)
 const getGlobalConfig = async () => {
   let config = await CbtSetting.findOne({ key: 'global_cbt_config' })
   if (!config) {
@@ -12,12 +12,18 @@ const getGlobalConfig = async () => {
       durationMinutes: 45,
       isExamActive: false,
     })
-  } else {
-    config.isExamActive = false
-    await config.save()
   }
   return config
 }
+
+// Helper: Normalize + validate matric number (e.g. EEE/2026/1001)
+const normalizeMatric = (matric) => {
+  return String(matric || '').trim().toUpperCase().replace(/\s+/g, '')
+}
+
+const MATRIC_REGEX = /^[A-Z]{2,4}\/\d{4}\/\d{3,4}$/
+
+const isValidMatric = (matric) => MATRIC_REGEX.test(matric)
 
 // @desc    Check student eligibility & session status
 // @route   GET /api/cbt/status
@@ -142,6 +148,17 @@ export const startExam = async (req, res) => {
       return res.status(400).json({ message: 'Matriculation number and subject combination are required.' })
     }
 
+    const cleanMatric = normalizeMatric(matricNumber)
+    if (!isValidMatric(cleanMatric)) {
+      return res.status(400).json({
+        message: 'Enter a valid matriculation number (e.g., EEE/2026/1001).',
+      })
+    }
+
+    if (!['MPC', 'PCB'].includes(combination)) {
+      return res.status(400).json({ message: 'Invalid subject combination. Choose MPC or PCB.' })
+    }
+
     const config = await getGlobalConfig()
     if (!config.isExamActive) {
       return res.status(400).json({ message: 'The scholarship examination is currently paused or inactive.' })
@@ -151,6 +168,20 @@ export const startExam = async (req, res) => {
 
     if (submission && submission.status === 'completed') {
       return res.status(400).json({ message: 'You have already completed your examination attempt.' })
+    }
+
+    // Server-side one-attempt enforcement: a matric number is a unique candidate
+    // identifier and cannot be used for a second, separate official attempt.
+    if (!submission) {
+      const matricTaken = await CbtSubmission.findOne({
+        matricNumber: cleanMatric,
+        status: { $in: ['completed', 'expired'] },
+      })
+      if (matricTaken && String(matricTaken.userId) !== String(user._id)) {
+        return res.status(400).json({
+          message: 'This matriculation number has already completed the exam for another account.',
+        })
+      }
     }
 
     const userSurname = surname || user.fullName?.split(' ').slice(-1)[0] || 'Student'
@@ -175,7 +206,7 @@ export const startExam = async (req, res) => {
         email: user.email,
         department: user.department || 'General Science',
         faculty: user.faculty || 'Science & Tech',
-        matricNumber: matricNumber.toUpperCase().trim(),
+        matricNumber: cleanMatric,
         combination,
         questionSet: config.activeSet,
         startedAt,
@@ -279,10 +310,15 @@ const scoreSubmission = async (submission, finalAnswers = null) => {
   })
 
   let correctCount = 0
+  const subjectCounts = {}
   questions.forEach((q) => {
+    const subj = q.subject
+    if (!subjectCounts[subj]) subjectCounts[subj] = { correct: 0, total: 0 }
+    subjectCounts[subj].total++
     const studentChoice = answersMap.get(String(q._id)) || answersMap.get(q._id)
     if (studentChoice && studentChoice.toUpperCase() === q.correct_option.toUpperCase()) {
       correctCount++
+      subjectCounts[subj].correct++
     }
   })
 
@@ -300,6 +336,7 @@ const scoreSubmission = async (submission, finalAnswers = null) => {
   submission.percentage = percentage
   submission.timeSpentSeconds = timeSpentSeconds
   submission.answers = Object.fromEntries(answersMap)
+  submission.subjectScores = subjectCounts
 
   await submission.save()
   return submission
