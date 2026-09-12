@@ -21,6 +21,7 @@ const Quizzes = () => {
   const [config, setConfig] = useState({ activeSet: 'Set A', durationMinutes: 45, isExamActive: true })
 
   // 2. Pre-quiz Form States
+  const [enrolled, setEnrolled] = useState(false)
   const [matricNumber, setMatricNumber] = useState('')
   const [combination, setCombination] = useState('MPC')
   const [surname, setSurname] = useState('')
@@ -31,6 +32,7 @@ const Quizzes = () => {
   const [questions, setQuestions] = useState([])
   const [activeSubject, setActiveSubject] = useState('')
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0)
+  const [paletteOpen, setPaletteOpen] = useState(false)
   const [answers, setAnswers] = useState({})
   const [timeLeft, setTimeLeft] = useState(0)
   const [isSubmitting, setIsSubmitting] = useState(false)
@@ -310,7 +312,7 @@ const Quizzes = () => {
   }
 
   return (
-    <Layout activePage="quizzes">
+    <Layout activePage="quizzes" hideAi={viewState === 'exam'}>
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
 
         {/* ── LOADING STATE ── */}
@@ -345,10 +347,45 @@ const Quizzes = () => {
 
                 {/* Registration Form Card */}
                 <div className="bg-white rounded-3xl border border-gray-200 shadow-sm p-6 sm:p-8 max-w-3xl mx-auto">
-                  <div className="border-b border-gray-100 pb-5 mb-6">
-                    <h3 className="text-lg font-black text-gray-900 font-heading">Candidate Examination Entry</h3>
-                    <p className="text-xs text-gray-500 font-medium">Verify your profile details and select your subject path to begin.</p>
-                  </div>
+                  {!enrolled ? (
+                    <div className="flex flex-col items-center text-center space-y-4 py-6">
+                      <div className="w-16 h-16 rounded-2xl bg-purple-100 text-purple-700 flex items-center justify-center shadow-xs">
+                        <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                        </svg>
+                      </div>
+                      <div>
+                        <h3 className="text-lg font-black text-gray-900 font-heading">Enroll into the RFUA Quiz</h3>
+                        <p className="text-xs text-gray-500 font-medium mt-1 max-w-sm">
+                          Enroll to verify your identity with your matriculation number and launch the official scholarship examination.
+                        </p>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => setEnrolled(true)}
+                        className="px-8 py-3.5 bg-purple-700 hover:bg-purple-800 text-white font-extrabold rounded-2xl shadow-lg shadow-purple-700/25 hover:-translate-y-0.5 active:translate-y-0 transition-all flex items-center gap-2 text-sm"
+                      >
+                        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zm3 11a6 6 0 00-12 0v1h12v-1z" />
+                        </svg>
+                        Enroll into the RFUA Quiz
+                      </button>
+                    </div>
+                  ) : (
+                  <div>
+                    <div className="border-b border-gray-100 pb-5 mb-6 flex items-center justify-between">
+                      <div>
+                        <h3 className="text-lg font-black text-gray-900 font-heading">Candidate Examination Entry</h3>
+                        <p className="text-xs text-gray-500 font-medium">Verify your profile details and select your subject path to begin.</p>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => setEnrolled(false)}
+                        className="text-xs font-bold text-purple-700 hover:text-purple-900 bg-purple-50 hover:bg-purple-100 px-3 py-1.5 rounded-lg transition-colors shrink-0"
+                      >
+                        ← Back
+                      </button>
+                    </div>
 
                   <form onSubmit={handleStartExam} className="space-y-5">
                     {/* Autofilled Student Details */}
@@ -513,6 +550,8 @@ const Quizzes = () => {
                       </button>
                     )}
                   </form>
+                  </div>
+                  )}
                 </div>
               </div>
             )}
@@ -521,17 +560,17 @@ const Quizzes = () => {
             {viewState === 'exam' && (
               <div className="space-y-5">
                 {/* Top Fixed Control Bar */}
-                <div className="bg-white rounded-2xl border border-gray-200 p-4 sm:p-5 shadow-md flex flex-col sm:flex-row items-center justify-between gap-4 sticky top-4 z-40">
-                  <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 rounded-xl bg-purple-100 text-purple-800 font-black flex items-center justify-center text-sm shadow-xs">
+                <div className="bg-white rounded-2xl border border-gray-200 p-3 sm:p-5 shadow-md flex flex-col sm:flex-row items-center justify-between gap-3 sm:gap-4 sticky top-4 z-40">
+                  <div className="flex items-center gap-3 w-full sm:w-auto">
+                    <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-xl bg-purple-100 text-purple-800 font-black flex items-center justify-center text-xs sm:text-sm shadow-xs shrink-0">
                       100L
                     </div>
-                    <div>
-                      <h2 className="font-extrabold text-sm sm:text-base text-gray-900 leading-tight">
+                    <div className="min-w-0">
+                      <h2 className="font-extrabold text-xs sm:text-base text-gray-900 leading-tight truncate">
                         RFUA Fellowship Scholarship Exam
                       </h2>
-                      <div className="flex items-center gap-2 text-xs text-gray-500 font-semibold mt-0.5">
-                        <span>Candidate: {surname} {firstname}</span>
+                      <div className="flex items-center gap-1.5 text-[11px] sm:text-xs text-gray-500 font-semibold mt-0.5 truncate">
+                        <span className="truncate">Candidate: {surname} {firstname}</span>
                         <span>•</span>
                         <span className="text-purple-700 font-bold uppercase">{combination}</span>
                       </div>
@@ -539,13 +578,13 @@ const Quizzes = () => {
                   </div>
 
                   {/* Countdown Timer */}
-                  <div className="flex items-center gap-4">
-                    <div className={`px-4 py-2 rounded-xl font-mono text-base sm:text-lg font-black border flex items-center gap-2 ${
+                  <div className="flex items-center gap-2 w-full sm:w-auto">
+                    <div className={`flex-1 sm:flex-none px-3 sm:px-4 py-2 rounded-xl font-mono text-sm sm:text-lg font-black border flex items-center justify-center gap-2 ${
                       timeLeft < 300
                         ? 'bg-red-50 text-red-700 border-red-200 animate-pulse'
                         : 'bg-gray-50 text-purple-900 border-purple-100'
                     }`}>
-                      <svg className="w-5 h-5 text-purple-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <svg className="w-4 h-4 sm:w-5 sm:h-5 text-purple-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
                       </svg>
                       <span>{formatTimer(timeLeft)}</span>
@@ -554,9 +593,9 @@ const Quizzes = () => {
                     <button
                       type="button"
                       onClick={() => setShowSubmitModal(true)}
-                      className="px-5 py-2.5 bg-purple-700 hover:bg-purple-800 text-white font-extrabold text-xs sm:text-sm rounded-xl shadow-md transition-all hover:scale-105 active:scale-95"
+                      className="px-4 sm:px-5 py-2 bg-purple-700 hover:bg-purple-800 text-white font-extrabold text-xs sm:text-sm rounded-xl shadow-md transition-all whitespace-nowrap"
                     >
-                      Submit Exam ({totalAnsweredCount}/{orderedQuestions.length || 75})
+                      Submit ({totalAnsweredCount}/{orderedQuestions.length || 75})
                     </button>
                   </div>
                 </div>
@@ -587,39 +626,52 @@ const Quizzes = () => {
                   })}
                 </div>
 
-                {/* Question Palette Grid (Answered vs Unanswered) */}
-                <div className="bg-white rounded-2xl border border-gray-200 p-4 sm:p-5 shadow-sm">
-                  <div className="flex flex-wrap items-center justify-between gap-2 mb-3">
-                    <h3 className="font-extrabold text-xs text-gray-900 uppercase tracking-wider">Question Palette</h3>
-                    <div className="flex items-center gap-3 text-[11px] font-bold text-gray-600">
-                      <span className="flex items-center gap-1.5"><span className="w-3 h-3 rounded bg-emerald-500 inline-block" /> Answered ({totalAnsweredCount})</span>
-                      <span className="flex items-center gap-1.5"><span className="w-3 h-3 rounded bg-purple-600 inline-block" /> Current</span>
-                      <span className="flex items-center gap-1.5"><span className="w-3 h-3 rounded bg-white border border-gray-300 inline-block" /> Unanswered ({orderedQuestions.length - totalAnsweredCount})</span>
+                {/* Question Palette Grid (collapsible + compact) */}
+                <div className="bg-white rounded-2xl border border-gray-200 shadow-sm overflow-hidden">
+                  <button
+                    type="button"
+                    onClick={() => setPaletteOpen((o) => !o)}
+                    className="w-full flex items-center justify-between gap-2 px-4 sm:px-5 py-3 hover:bg-gray-50/70 transition-colors"
+                  >
+                    <div className="flex items-center gap-2">
+                      <svg className={`w-4 h-4 text-purple-700 transition-transform ${paletteOpen ? 'rotate-90' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M9 5l7 7-7 7" />
+                      </svg>
+                      <span className="font-extrabold text-xs text-gray-900 uppercase tracking-wider">Question Palette</span>
                     </div>
-                  </div>
-                  <div className="grid grid-cols-6 sm:grid-cols-10 md:grid-cols-15 gap-1.5">
-                    {orderedQuestions.map((q, i) => {
-                      const answered = Boolean(answers[q._id])
-                      const isCurrent = i === currentQuestionIndex
-                      return (
-                        <button
-                          key={q._id}
-                          type="button"
-                          onClick={() => setCurrentQuestionIndex(i)}
-                          title={`Q${i + 1}: ${q.subject} — ${answered ? 'Answered' : 'Unanswered'}`}
-                          className={`aspect-square rounded-lg text-[11px] font-black flex items-center justify-center border transition-all ${
-                            isCurrent
-                              ? 'bg-purple-700 text-white border-purple-800 scale-105 shadow-md shadow-purple-700/30'
-                              : answered
-                              ? 'bg-emerald-500 text-white border-emerald-600 hover:bg-emerald-600'
-                              : 'bg-white text-gray-500 border-gray-200 hover:border-purple-400 hover:text-purple-700'
-                          }`}
-                        >
-                          {i + 1}
-                        </button>
-                      )
-                    })}
-                  </div>
+                    <div className="flex items-center gap-3 text-[11px] font-bold text-gray-600">
+                      <span className="flex items-center gap-1.5"><span className="w-3 h-3 rounded bg-emerald-500 inline-block" /> {totalAnsweredCount}</span>
+                      <span className="flex items-center gap-1.5"><span className="w-3 h-3 rounded bg-white border border-gray-300 inline-block" /> {orderedQuestions.length - totalAnsweredCount}</span>
+                    </div>
+                  </button>
+
+                  {paletteOpen && (
+                    <div className="px-4 sm:px-5 pb-4 border-t border-gray-100 pt-3">
+                      <div className="grid grid-cols-10 sm:grid-cols-15 gap-1.5">
+                        {orderedQuestions.map((q, i) => {
+                          const answered = Boolean(answers[q._id])
+                          const isCurrent = i === currentQuestionIndex
+                          return (
+                            <button
+                              key={q._id}
+                              type="button"
+                              onClick={() => setCurrentQuestionIndex(i)}
+                              title={`Q${i + 1}: ${q.subject} — ${answered ? 'Answered' : 'Unanswered'}`}
+                              className={`aspect-square rounded-md text-[10px] sm:text-[11px] font-black flex items-center justify-center border transition-all ${
+                                isCurrent
+                                  ? 'bg-purple-700 text-white border-purple-800 shadow-sm shadow-purple-700/30'
+                                  : answered
+                                  ? 'bg-emerald-500 text-white border-emerald-600 hover:bg-emerald-600'
+                                  : 'bg-white text-gray-500 border-gray-200 hover:border-purple-400 hover:text-purple-700'
+                              }`}
+                            >
+                              {i + 1}
+                            </button>
+                          )
+                        })}
+                      </div>
+                    </div>
+                  )}
                 </div>
 
                 {/* Single Active Question (One-at-a-Time, JAMB-Style) */}
@@ -630,40 +682,23 @@ const Quizzes = () => {
                     </div>
                   ) : (
                     <>
-                      <div className="flex items-center justify-between flex-wrap gap-2">
-                        <button
-                          type="button"
-                          onClick={goPrevQuestion}
-                          disabled={currentQuestionIndex === 0}
-                          className="px-4 py-2 rounded-xl border border-gray-200 bg-white text-xs font-extrabold text-gray-700 hover:bg-gray-50 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
-                        >
-                          ← Previous
-                        </button>
-                        <span className="text-xs sm:text-sm font-extrabold text-gray-800 bg-gray-100 border border-gray-200 px-4 py-2 rounded-xl">
-                          Question {currentQuestionIndex + 1} of {orderedQuestions.length}
+                      {/* Topic Banner */}
+                      <div className="bg-gradient-to-r from-[#2c1854] to-[#4B2E83] rounded-2xl px-4 sm:px-5 py-3.5 text-white shadow-sm flex items-center justify-between gap-3">
+                        <div className="flex items-center gap-2.5 min-w-0">
+                          <span className="w-2 h-2 rounded-full bg-purple-300 animate-pulse shrink-0" />
+                          <div className="min-w-0">
+                            <p className="text-[10px] uppercase tracking-wider text-purple-200 font-bold">Current Topic</p>
+                            <p className="font-extrabold text-xs sm:text-sm leading-tight truncate">
+                              {activeQuestion.subject} • {activeQuestion.subsection_name}
+                            </p>
+                          </div>
+                        </div>
+                        <span className="px-3 py-1 bg-white/15 border border-white/20 rounded-lg text-[11px] font-black whitespace-nowrap">
+                          {currentQuestionIndex + 1}/{orderedQuestions.length}
                         </span>
-                        <button
-                          type="button"
-                          onClick={goNextQuestion}
-                          disabled={currentQuestionIndex === orderedQuestions.length - 1}
-                          className="px-4 py-2 rounded-xl border border-gray-200 bg-white text-xs font-extrabold text-gray-700 hover:bg-gray-50 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
-                        >
-                          Next →
-                        </button>
                       </div>
 
                       <div className="bg-white rounded-2xl border border-gray-200 p-5 sm:p-6 shadow-sm hover:border-purple-200 transition-colors">
-                        <div className="flex justify-between items-start mb-3 gap-3">
-                          <span className="inline-block px-3 py-1 bg-purple-50 text-purple-800 text-xs font-extrabold rounded-lg">
-                            {activeQuestion.subject} • {activeQuestion.subsection_name}
-                          </span>
-                          {answers[activeQuestion._id] && (
-                            <span className="text-xs font-extrabold text-emerald-700 bg-emerald-50 border border-emerald-200 px-2.5 py-0.5 rounded-md flex items-center gap-1">
-                              ✓ Answered ({answers[activeQuestion._id]})
-                            </span>
-                          )}
-                        </div>
-
                         <h4 className="text-sm sm:text-base font-bold text-gray-900 mb-4 leading-relaxed">
                           {activeQuestion.question_text}
                         </h4>
@@ -694,6 +729,41 @@ const Quizzes = () => {
                             )
                           })}
                         </div>
+
+                        {/* Question number under question */}
+                        <div className="flex items-center justify-between mt-4 pt-3 border-t border-gray-100">
+                          <span className="text-xs font-extrabold text-gray-500">
+                            Q{currentQuestionIndex + 1}
+                          </span>
+                          {answers[activeQuestion._id] && (
+                            <span className="text-xs font-extrabold text-emerald-700 bg-emerald-50 border border-emerald-200 px-2.5 py-0.5 rounded-md flex items-center gap-1">
+                              ✓ Answered ({answers[activeQuestion._id]})
+                            </span>
+                          )}
+                        </div>
+                      </div>
+
+                      {/* Prev / Next below question */}
+                      <div className="flex items-center justify-between gap-3">
+                        <button
+                          type="button"
+                          onClick={goPrevQuestion}
+                          disabled={currentQuestionIndex === 0}
+                          className="flex-1 sm:flex-none px-4 py-3 rounded-xl border border-gray-200 bg-white text-xs font-extrabold text-gray-700 hover:bg-gray-50 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+                        >
+                          ← Previous
+                        </button>
+                        <span className="text-[11px] sm:text-xs font-bold text-gray-400 sm:hidden">
+                          {currentQuestionIndex + 1}/{orderedQuestions.length}
+                        </span>
+                        <button
+                          type="button"
+                          onClick={goNextQuestion}
+                          disabled={currentQuestionIndex === orderedQuestions.length - 1}
+                          className="flex-1 sm:flex-none px-4 py-3 rounded-xl border border-gray-200 bg-white text-xs font-extrabold text-gray-700 hover:bg-gray-50 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+                        >
+                          Next →
+                        </button>
                       </div>
                     </>
                   )}
@@ -973,7 +1043,7 @@ const Quizzes = () => {
 
         {/* AI StudyBuddy Drawer */}
         <AskStudyBuddy
-          isOpen={isAiOpen}
+          isOpen={viewState !== 'exam' && isAiOpen}
           onClose={() => setIsAiOpen(false)}
           initialQuery={aiInitialQuery}
         />
