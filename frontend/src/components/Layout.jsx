@@ -254,7 +254,7 @@ const Layout = ({ children, hideAi = false }) => {
       </aside>
 
       {/* Main Content */}
-      <div className="flex-1 flex flex-col min-h-screen">
+      <div className="flex-1 flex flex-col min-h-screen min-w-0">
         {/* Top Header */}
         <header className="bg-transparent px-4 md:px-8 pt-8 pb-4">
           <div className="flex items-center justify-between gap-4">

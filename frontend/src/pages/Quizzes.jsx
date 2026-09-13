@@ -29,10 +29,11 @@ const Quizzes = () => {
 
   // 3. Active Exam States
   const [viewState, setViewState] = useState('setup') // 'setup', 'exam', 'result'
+  const [examOpen, setExamOpen] = useState(false)
   const [questions, setQuestions] = useState([])
   const [activeSubject, setActiveSubject] = useState('')
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0)
-  const [paletteOpen, setPaletteOpen] = useState(false)
+  const [paletteOpen, setPaletteOpen] = useState(true)
   const [answers, setAnswers] = useState({})
   const [timeLeft, setTimeLeft] = useState(0)
   const [isSubmitting, setIsSubmitting] = useState(false)
@@ -111,8 +112,10 @@ const Quizzes = () => {
         if (data.alreadyTaken) {
           setAlreadyTaken(true)
           setSubmission(data.submission)
+          setExamOpen(true)
           setViewState('result')
         } else if (data.hasActiveSession) {
+          setExamOpen(true)
           setSubmission(data.submission)
           setCombination(data.submission.combination)
           setMatricNumber(data.submission.matricNumber)
@@ -324,7 +327,7 @@ const Quizzes = () => {
         )}
 
         {/* ── 100L SCHOLARSHIP EXAM VIEW (For 100L Students) ── */}
-        {!loading && is100LUser && (
+        {!loading && is100LUser && examOpen && (
           <>
             {/* SETUP VIEW FOR 100L */}
             {!alreadyTaken && viewState === 'setup' && (
@@ -626,54 +629,6 @@ const Quizzes = () => {
                   })}
                 </div>
 
-                {/* Question Palette Grid (collapsible + compact) */}
-                <div className="bg-white rounded-2xl border border-gray-200 shadow-sm overflow-hidden">
-                  <button
-                    type="button"
-                    onClick={() => setPaletteOpen((o) => !o)}
-                    className="w-full flex items-center justify-between gap-2 px-4 sm:px-5 py-3 hover:bg-gray-50/70 transition-colors"
-                  >
-                    <div className="flex items-center gap-2">
-                      <svg className={`w-4 h-4 text-purple-700 transition-transform ${paletteOpen ? 'rotate-90' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M9 5l7 7-7 7" />
-                      </svg>
-                      <span className="font-extrabold text-xs text-gray-900 uppercase tracking-wider">Question Palette</span>
-                    </div>
-                    <div className="flex items-center gap-3 text-[11px] font-bold text-gray-600">
-                      <span className="flex items-center gap-1.5"><span className="w-3 h-3 rounded bg-emerald-500 inline-block" /> {totalAnsweredCount}</span>
-                      <span className="flex items-center gap-1.5"><span className="w-3 h-3 rounded bg-white border border-gray-300 inline-block" /> {orderedQuestions.length - totalAnsweredCount}</span>
-                    </div>
-                  </button>
-
-                  {paletteOpen && (
-                    <div className="px-4 sm:px-5 pb-4 border-t border-gray-100 pt-3">
-                      <div className="grid grid-cols-10 sm:grid-cols-15 gap-1.5">
-                        {orderedQuestions.map((q, i) => {
-                          const answered = Boolean(answers[q._id])
-                          const isCurrent = i === currentQuestionIndex
-                          return (
-                            <button
-                              key={q._id}
-                              type="button"
-                              onClick={() => setCurrentQuestionIndex(i)}
-                              title={`Q${i + 1}: ${q.subject} — ${answered ? 'Answered' : 'Unanswered'}`}
-                              className={`aspect-square rounded-md text-[10px] sm:text-[11px] font-black flex items-center justify-center border transition-all ${
-                                isCurrent
-                                  ? 'bg-purple-700 text-white border-purple-800 shadow-sm shadow-purple-700/30'
-                                  : answered
-                                  ? 'bg-emerald-500 text-white border-emerald-600 hover:bg-emerald-600'
-                                  : 'bg-white text-gray-500 border-gray-200 hover:border-purple-400 hover:text-purple-700'
-                              }`}
-                            >
-                              {i + 1}
-                            </button>
-                          )
-                        })}
-                      </div>
-                    </div>
-                  )}
-                </div>
-
                 {/* Single Active Question (One-at-a-Time, JAMB-Style) */}
                 <div className="space-y-4">
                   {!activeQuestion ? (
@@ -764,6 +719,54 @@ const Quizzes = () => {
                         >
                           Next →
                         </button>
+                      </div>
+
+                      {/* Question Palette Grid (collapsible + compact) — below question nav */}
+                      <div className="bg-white rounded-2xl border border-gray-200 shadow-sm overflow-hidden">
+                        <button
+                          type="button"
+                          onClick={() => setPaletteOpen((o) => !o)}
+                          className="w-full flex items-center justify-between gap-2 px-4 sm:px-5 py-3 hover:bg-gray-50/70 transition-colors"
+                        >
+                          <div className="flex items-center gap-2">
+                            <svg className={`w-4 h-4 text-purple-700 transition-transform ${paletteOpen ? 'rotate-90' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M9 5l7 7-7 7" />
+                            </svg>
+                            <span className="font-extrabold text-xs text-gray-900 uppercase tracking-wider">Question Palette</span>
+                          </div>
+                          <div className="flex items-center gap-3 text-[11px] font-bold text-gray-600">
+                            <span className="flex items-center gap-1.5"><span className="w-3 h-3 rounded bg-emerald-500 inline-block" /> {totalAnsweredCount}</span>
+                            <span className="flex items-center gap-1.5"><span className="w-3 h-3 rounded bg-white border border-gray-300 inline-block" /> {orderedQuestions.length - totalAnsweredCount}</span>
+                          </div>
+                        </button>
+
+                        {paletteOpen && (
+                          <div className="px-4 sm:px-5 pb-4 border-t border-gray-100 pt-3">
+                            <div className="grid grid-cols-10 sm:grid-cols-15 gap-1.5">
+                              {orderedQuestions.map((q, i) => {
+                                const answered = Boolean(answers[q._id])
+                                const isCurrent = i === currentQuestionIndex
+                                return (
+                                  <button
+                                    key={q._id}
+                                    type="button"
+                                    onClick={() => setCurrentQuestionIndex(i)}
+                                    title={`Q${i + 1}: ${q.subject} — ${answered ? 'Answered' : 'Unanswered'}`}
+                                    className={`aspect-square rounded-md text-[10px] sm:text-[11px] font-black flex items-center justify-center border transition-all ${
+                                      isCurrent
+                                        ? 'bg-purple-700 text-white border-purple-800 shadow-sm shadow-purple-700/30'
+                                        : answered
+                                        ? 'bg-emerald-500 text-white border-emerald-600 hover:bg-emerald-600'
+                                        : 'bg-white text-gray-500 border-gray-200 hover:border-purple-400 hover:text-purple-700'
+                                    }`}
+                                  >
+                                    {i + 1}
+                                  </button>
+                                )
+                              })}
+                            </div>
+                          </div>
+                        )}
                       </div>
                     </>
                   )}
@@ -912,23 +915,25 @@ const Quizzes = () => {
           </>
         )}
 
-        {/* ── STANDARD PRACTICE QUIZZES VIEW (For 200L-500L Students & Guests) ── */}
-        {!loading && !is100LUser && (
+        {/* ── STANDARD PRACTICE QUIZZES VIEW (For 200L-500L Students, Guests & 100L Landing) ── */}
+        {!loading && !(is100LUser && examOpen) && (
           <div className="space-y-6">
             {/* Informative Banner */}
-            <div className="bg-purple-50/70 border border-purple-100 rounded-2xl p-4 sm:p-5 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-              <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-xl bg-purple-100 text-purple-700 flex items-center justify-center shrink-0">
-                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                  </svg>
-                </div>
-                <div>
-                  <h3 className="font-extrabold text-sm text-gray-900">RFUA 100L Scholarship Exam Active</h3>
-                  <p className="text-xs text-gray-600 font-medium">The official Fellowship Scholarship assessment is currently live for 100-Level candidates. You can use this portal to practice course quizzes below!</p>
+            {!is100LUser && (
+              <div className="bg-purple-50/70 border border-purple-100 rounded-2xl p-4 sm:p-5 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-xl bg-purple-100 text-purple-700 flex items-center justify-center shrink-0">
+                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                  </div>
+                  <div>
+                    <h3 className="font-extrabold text-sm text-gray-900">RFUA 100L Scholarship Exam Active</h3>
+                    <p className="text-xs text-gray-600 font-medium">The official Fellowship Scholarship assessment is currently live for 100-Level candidates. You can use this portal to practice course quizzes below!</p>
+                  </div>
                 </div>
               </div>
-            </div>
+            )}
 
             {/* Header Banner */}
             <div className="bg-gradient-to-r from-purple-brand to-purple-800 rounded-2xl p-6 sm:p-8 text-white shadow-lg relative overflow-hidden">
@@ -1002,6 +1007,25 @@ const Quizzes = () => {
                 </>
               )}
             </div>
+
+            {/* RFUA Scholarship Launch Button (100L Landing) */}
+            {is100LUser && (
+              <div className="flex justify-center pt-2">
+                <button
+                  type="button"
+                  onClick={() => setExamOpen(true)}
+                  className="animate-oscillate px-8 sm:px-10 py-4 sm:py-5 bg-gradient-to-r from-[#2c1854] via-[#4B2E83] to-[#5e3da1] text-white font-black rounded-2xl text-sm sm:text-base flex items-center gap-3 hover:from-[#351f66] hover:to-[#4B2E83] transition-colors"
+                >
+                  <svg className="w-5 h-5 sm:w-6 sm:h-6 text-purple-200" fill="currentColor" viewBox="0 0 24 24">
+                    <path d="M12 2l2.4 7.4H22l-6 4.6 2.3 7.4-6.3-4.6-6.3 4.6L8 14 2 9.4h7.6z" />
+                  </svg>
+                  RFUA Scholarship
+                  <svg className="w-5 h-5 sm:w-6 sm:h-6 text-purple-200" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M14 5l7 7m0 0l-7 7m7-7H3" />
+                  </svg>
+                </button>
+              </div>
+            )}
           </div>
         )}
 
