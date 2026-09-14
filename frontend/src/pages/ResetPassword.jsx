@@ -12,6 +12,8 @@ const ResetPassword = () => {
   const { login } = useAuth()
   const email = location.state?.email || ''
   const token = location.state?.token || ''
+  const redirectState = location.state?.from ? { from: location.state.from } : undefined
+  const redirectTo = location.state?.from?.pathname || '/dashboard'
   const [formData, setFormData] = useState({
     password: '',
     confirmPassword: '',
@@ -23,8 +25,9 @@ const ResetPassword = () => {
   useEffect(() => {
     if (!email || !token) {
       toast.error('Invalid reset link. Please start over.')
-      navigate('/forgot-password')
+      navigate('/forgot-password', { state: redirectState })
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [email, token, navigate])
 
   const handleChange = (e) => {
@@ -60,9 +63,9 @@ const ResetPassword = () => {
         toast.success('Password reset successfully!')
         const loginResult = await login(email, formData.password)
         if (loginResult.success) {
-          navigate('/dashboard')
+          navigate(redirectTo)
         } else {
-          navigate('/login')
+          navigate('/login', { state: redirectState })
         }
       }
     } catch (error) {
@@ -227,6 +230,7 @@ const ResetPassword = () => {
             <div className="mt-6 pt-4 border-t border-gray-100 text-center">
               <Link
                 to="/login"
+                state={redirectState}
                 className="inline-flex items-center gap-2 text-xs font-bold text-[#4B2E83] hover:underline"
               >
                 <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">

@@ -3,10 +3,17 @@ import { useAuth } from '../context/AuthContext'
 import { useNavigate, useLocation } from 'react-router-dom'
 import logo from '../assets/logo.png'
 import dashboardIcon from '../assets/dashboard-square-02.png'
-import coursesIcon from '../assets/notebook-02.png'
 import logoutIcon from '../assets/logout-square-01.png'
 
-const AdminLayout = ({ children }) => {
+// Small reusable Material Symbols icon helper (font already loaded globally, see index.html/index.css)
+const Icon = ({ name, className = '' }) => (
+  <span className={`icon-sym ${className}`} aria-hidden="true">{name}</span>
+)
+
+// Pass `sections` + `activeSection` + `onSectionChange` to render a real sidebar
+// menu for a page with multiple internal views (e.g. AdminDashboard), instead of
+// the single default "Admin Dashboard" scroll-to-top item.
+const AdminLayout = ({ children, sections, activeSection, onSectionChange }) => {
   const { user, logout } = useAuth()
   const navigate = useNavigate()
   const location = useLocation()
@@ -28,13 +35,16 @@ const AdminLayout = ({ children }) => {
     navigate('/admin/login')
   }
 
-  const navigationItems = [
-    { name: 'Admin Dashboard', path: '/admin/dashboard', icon: dashboardIcon, isImage: true, action: 'scroll' },
+  const navigationItems = sections || [
+    { key: 'dashboard', name: 'Admin Dashboard', path: '/admin/dashboard', icon: dashboardIcon, isImage: true, action: 'scroll' },
   ]
 
-  const isActive = (path) => location.pathname === path
+  const isActive = (item) => (sections ? item.key === activeSection : location.pathname === item.path)
 
   const getPageTitle = () => {
+    if (sections) {
+      return sections.find((s) => s.key === activeSection)?.name || 'Admin Dashboard'
+    }
     if (location.pathname === '/admin/dashboard') {
       return 'Admin Dashboard'
     }
@@ -71,9 +81,11 @@ const AdminLayout = ({ children }) => {
           <nav className="flex-1 p-4 space-y-2">
             {navigationItems.map((item) => (
               <button
-                key={item.path}
+                key={item.key || item.path}
                 onClick={() => {
-                  if (item.action === 'scroll') {
+                  if (sections) {
+                    onSectionChange?.(item.key)
+                  } else if (item.action === 'scroll') {
                     window.scrollTo({ top: 0, behavior: 'smooth' })
                   } else if (item.path) {
                     navigate(item.path)
@@ -83,7 +95,7 @@ const AdminLayout = ({ children }) => {
                 className={`
                   w-full flex items-center gap-3 px-4 py-3 rounded-lg
                   transition-colors text-left
-                  ${isActive(item.path)
+                  ${isActive(item)
                     ? 'bg-purple-100 text-purple-brand font-semibold'
                     : 'text-gray-700 hover:bg-gray-100'
                   }
@@ -91,10 +103,21 @@ const AdminLayout = ({ children }) => {
               >
                 {item.isImage ? (
                   <img src={item.icon} alt={item.name} className="w-5 h-5 object-contain" />
+                ) : sections ? (
+                  <Icon name={item.icon} className="text-xl" />
                 ) : (
                   <span className="text-xl">{item.icon}</span>
                 )}
-                <span>{item.name}</span>
+                <span className="flex-1">{item.name}</span>
+                {Boolean(item.badge) && (
+                  <span
+                    className={`px-1.5 py-0.5 rounded-full text-[10px] font-black ${
+                      isActive(item) ? 'bg-purple-brand/15 text-purple-brand' : 'bg-gray-200 text-gray-600'
+                    }`}
+                  >
+                    {item.badge}
+                  </span>
+                )}
               </button>
             ))}
           </nav>

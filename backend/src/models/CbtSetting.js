@@ -20,6 +20,14 @@ const cbtSettingSchema = new mongoose.Schema(
       type: Boolean,
       default: false,
     },
+    examStartAt: {
+      type: Date,
+      default: null,
+    },
+    examEndAt: {
+      type: Date,
+      default: null,
+    },
   },
   {
     timestamps: true,

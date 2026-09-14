@@ -9,6 +9,7 @@ const EnterOTP = () => {
   const location = useLocation()
   const navigate = useNavigate()
   const email = location.state?.email || ''
+  const redirectState = location.state?.from ? { from: location.state.from } : undefined
   const [otp, setOtp] = useState(['', '', '', '', '', ''])
   const [loading, setLoading] = useState(false)
   const inputRefs = useRef([])
@@ -16,8 +17,9 @@ const EnterOTP = () => {
   useEffect(() => {
     if (!email) {
       toast.error('Email not found. Please start over.')
-      navigate('/forgot-password')
+      navigate('/forgot-password', { state: redirectState })
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [email, navigate])
 
   const handleChange = (index, value) => {
@@ -67,7 +69,7 @@ const EnterOTP = () => {
       const response = await api.post('/auth/verify-otp', { email, otp: otpString })
       if (response.data.success) {
         toast.success('OTP verified successfully!')
-        navigate('/reset-password', { state: { email, token: response.data.token } })
+        navigate('/reset-password', { state: { email, token: response.data.token, ...redirectState } })
       }
     } catch (error) {
       toast.error(error.response?.data?.message || 'Invalid OTP. Please try again.')
@@ -183,6 +185,7 @@ const EnterOTP = () => {
             <div className="mt-6 pt-4 border-t border-gray-100 text-center">
               <Link
                 to="/forgot-password"
+                state={redirectState}
                 className="inline-flex items-center gap-2 text-xs font-bold text-[#4B2E83] hover:underline"
               >
                 <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">

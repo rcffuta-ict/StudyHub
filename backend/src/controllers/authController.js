@@ -85,10 +85,12 @@ const login = async (req, res) => {
     // Normalize email (lowercase and trim) to match database storage
     const normalizedEmail = email.toLowerCase().trim()
 
-    // Check for user
+    // Check for user. Unlike the generic "Invalid credentials" below, a missing
+    // account is flagged explicitly so the frontend can offer to register instead
+    // of just failing — this is a deliberate, small account-enumeration trade-off.
     const user = await User.findOne({ email: normalizedEmail })
     if (!user) {
-      return res.status(401).json({ message: 'Invalid credentials' })
+      return res.status(404).json({ message: 'No account found with that email address.', accountNotFound: true })
     }
 
     // Check password

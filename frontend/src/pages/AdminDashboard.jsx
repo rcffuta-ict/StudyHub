@@ -28,8 +28,24 @@ const AdminDashboard = () => {
 
   // CBT Scholarship States
   const [cbtSubmissions, setCbtSubmissions] = useState([])
-  const [cbtConfig, setCbtConfig] = useState({ activeSet: 'Set A', durationMinutes: 45, isExamActive: true })
+  const [cbtConfig, setCbtConfig] = useState({ activeSet: 'Set A', durationMinutes: 45, isExamActive: true, examStartAt: null, examEndAt: null })
   const [loadingCbt, setLoadingCbt] = useState(false)
+  const [examWindow, setExamWindow] = useState({ start: '', end: '' })
+
+  // Convert an ISO date string to the "YYYY-MM-DDTHH:mm" shape <input type="datetime-local"> expects
+  const toDatetimeLocal = (iso) => {
+    if (!iso) return ''
+    const d = new Date(iso)
+    const pad = (n) => String(n).padStart(2, '0')
+    return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`
+  }
+
+  useEffect(() => {
+    setExamWindow({
+      start: toDatetimeLocal(cbtConfig.examStartAt),
+      end: toDatetimeLocal(cbtConfig.examEndAt),
+    })
+  }, [cbtConfig.examStartAt, cbtConfig.examEndAt])
 
   const fetchCbtLeaderboard = async () => {
     try {
@@ -58,8 +74,19 @@ const AdminDashboard = () => {
         toast.success('CBT Exam Settings Updated!')
       }
     } catch (error) {
-      toast.error('Failed to update CBT settings.')
+      toast.error(error.response?.data?.message || 'Failed to update CBT settings.')
     }
+  }
+
+  const handleSaveExamWindow = () => {
+    handleUpdateCbtSettings({
+      examStartAt: examWindow.start ? new Date(examWindow.start).toISOString() : null,
+      examEndAt: examWindow.end ? new Date(examWindow.end).toISOString() : null,
+    })
+  }
+
+  const handleClearExamWindow = () => {
+    handleUpdateCbtSettings({ examStartAt: null, examEndAt: null })
   }
 
   const handleResetCbtAttempt = async (id, studentName) => {
@@ -206,6 +233,9 @@ const AdminDashboard = () => {
   })
   const [creatingCourse, setCreatingCourse] = useState(false)
   const [showCreateCourse, setShowCreateCourse] = useState(false)
+
+  // Dashboard section navigation (keeps unrelated admin tools visually separated)
+  const [activeTab, setActiveTab] = useState('overview')
 
   useEffect(() => {
     const adminEmail = import.meta.env.VITE_ADMIN_EMAIL || ''
@@ -390,9 +420,17 @@ const AdminDashboard = () => {
 
   const unreadCount = messages.filter(m => m.status === 'unread').length
 
+  // Sidebar menu sections — AdminLayout renders these as real navigation items
+  const SECTIONS = [
+    { key: 'overview', name: 'Overview', icon: 'dashboard' },
+    { key: 'cbt', name: 'Scholarship Exam', icon: 'school', badge: cbtSubmissions.length },
+    { key: 'messages', name: 'Messages', icon: 'mail', badge: unreadCount },
+    { key: 'courses', name: 'Courses & Content', icon: 'menu_book' },
+  ]
+
   if (loading) {
     return (
-      <AdminLayout>
+      <AdminLayout sections={SECTIONS} activeSection={activeTab} onSectionChange={setActiveTab}>
         <div className="flex items-center justify-center min-h-[400px]">
           <LoadingSpinner size="lg" />
         </div>
@@ -401,28 +439,56 @@ const AdminDashboard = () => {
   }
 
   return (
-    <AdminLayout>
-      <div>
-        {/* Academic Season Panel */}
-        <div className="mb-6 bg-white rounded-lg shadow-sm p-6 border border-gray-200">
-          <h2 className="text-xl font-bold mb-2">Academic Season Control</h2>
-          <p className="text-sm text-gray-500 mb-4">Toggle the current calendar phase of the university. This dynamically changes countdown deadlines and motivation types on student homepages.</p>
-          <div className="flex flex-wrap gap-4">
-            {['first-semester', 'second-semester', 'academic-break'].map((season) => (
-              <button
-                key={season}
-                type="button"
-                onClick={() => handleSeasonChange(season)}
-                className={`px-5 py-2.5 rounded-lg text-sm font-semibold transition-all ${academicSeason === season ? 'bg-purple-brand text-white shadow' : 'bg-gray-100 text-gray-700 hover:bg-gray-200'}`}
-              >
-                {season === 'first-semester' ? 'First Semester' : season === 'second-semester' ? 'Second Semester' : 'Academic Break'}
-              </button>
-            ))}
-          </div>
-        </div>
+    <AdminLayout sections={SECTIONS} activeSection={activeTab} onSectionChange={setActiveTab}>
+      <div className="space-y-6">
+        {/* ── OVERVIEW TAB ── */}
+        {activeTab === 'overview' && (
+          <div className="space-y-6">
+            {/* Quick Stats */}
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4">
+              <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-4">
+                <span className="block text-[11px] font-bold text-gray-500 uppercase tracking-wider mb-1">Courses</span>
+                <span className="text-2xl font-black text-gray-900">{courses.length}</span>
+              </div>
+              <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-4">
+                <span className="block text-[11px] font-bold text-gray-500 uppercase tracking-wider mb-1">CBT Submissions</span>
+                <span className="text-2xl font-black text-gray-900">{cbtSubmissions.length}</span>
+              </div>
+              <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-4">
+                <span className="block text-[11px] font-bold text-gray-500 uppercase tracking-wider mb-1">Unread Messages</span>
+                <span className="text-2xl font-black text-gray-900">{unreadCount}</span>
+              </div>
+              <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-4">
+                <span className="block text-[11px] font-bold text-gray-500 uppercase tracking-wider mb-1">Exam Status</span>
+                <span className={`text-sm font-black ${cbtConfig.isExamActive ? 'text-emerald-600' : 'text-rose-600'}`}>
+                  {cbtConfig.isExamActive ? 'Active' : 'Paused'}
+                </span>
+              </div>
+            </div>
 
-        {/* 100L Scholarship CBT Management Panel */}
-        <div className="mb-6 bg-white rounded-lg shadow-sm p-6 border border-gray-200">
+            {/* Academic Season Panel */}
+            <div className="bg-white rounded-lg shadow-sm p-4 sm:p-6 border border-gray-200">
+              <h2 className="text-lg sm:text-xl font-bold mb-2">Academic Season Control</h2>
+              <p className="text-sm text-gray-500 mb-4">Toggle the current calendar phase of the university. This dynamically changes countdown deadlines and motivation types on student homepages.</p>
+              <div className="flex flex-wrap gap-2 sm:gap-4">
+                {['first-semester', 'second-semester', 'academic-break'].map((season) => (
+                  <button
+                    key={season}
+                    type="button"
+                    onClick={() => handleSeasonChange(season)}
+                    className={`px-4 sm:px-5 py-2 sm:py-2.5 rounded-lg text-xs sm:text-sm font-semibold transition-all ${academicSeason === season ? 'bg-purple-brand text-white shadow' : 'bg-gray-100 text-gray-700 hover:bg-gray-200'}`}
+                  >
+                    {season === 'first-semester' ? 'First Semester' : season === 'second-semester' ? 'Second Semester' : 'Academic Break'}
+                  </button>
+                ))}
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* ── SCHOLARSHIP EXAM TAB ── */}
+        {activeTab === 'cbt' && (
+        <div className="bg-white rounded-lg shadow-sm p-4 sm:p-6 border border-gray-200">
           <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-4 pb-4 border-b border-gray-100">
             <div>
               <div className="flex items-center gap-2">
@@ -520,6 +586,65 @@ const AdminDashboard = () => {
             </div>
           </div>
 
+          {/* Scheduled Exam Window */}
+          <div className="mb-6 p-4 bg-purple-50/50 rounded-xl border border-purple-100">
+            <label className="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-1.5">
+              Scheduled Exam Window (Optional)
+            </label>
+            <p className="text-[11px] text-gray-500 mb-3">
+              Restrict when students can <strong>start</strong> a fresh attempt, in addition to the Exam Active toggle above. Leave blank for no schedule restriction. Students already mid-exam can still finish after the window closes.
+            </p>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-3">
+              <div>
+                <label className="block text-[11px] font-bold text-gray-600 mb-1">Opens At</label>
+                <input
+                  type="datetime-local"
+                  value={examWindow.start}
+                  onChange={(e) => setExamWindow({ ...examWindow, start: e.target.value })}
+                  className="w-full px-3 py-1.5 bg-white border border-gray-300 rounded-lg text-xs font-bold text-gray-900"
+                />
+              </div>
+              <div>
+                <label className="block text-[11px] font-bold text-gray-600 mb-1">Closes At</label>
+                <input
+                  type="datetime-local"
+                  value={examWindow.end}
+                  onChange={(e) => setExamWindow({ ...examWindow, end: e.target.value })}
+                  className="w-full px-3 py-1.5 bg-white border border-gray-300 rounded-lg text-xs font-bold text-gray-900"
+                />
+              </div>
+            </div>
+            <div className="flex flex-wrap items-center gap-2">
+              <button
+                type="button"
+                onClick={handleSaveExamWindow}
+                className="px-3.5 py-1.5 bg-purple-brand text-white text-xs font-bold rounded-lg hover:bg-purple-800"
+              >
+                Save Window
+              </button>
+              <button
+                type="button"
+                onClick={handleClearExamWindow}
+                className="px-3.5 py-1.5 bg-gray-100 text-gray-700 text-xs font-bold rounded-lg hover:bg-gray-200"
+              >
+                Clear Window
+              </button>
+              <span className="text-[11px] font-bold text-gray-500 ml-auto">
+                {(() => {
+                  if (!cbtConfig.examStartAt && !cbtConfig.examEndAt) return 'No schedule set — manual toggle only.'
+                  const now = new Date()
+                  if (cbtConfig.examStartAt && now < new Date(cbtConfig.examStartAt)) {
+                    return `🕒 Opens ${new Date(cbtConfig.examStartAt).toLocaleString()}`
+                  }
+                  if (cbtConfig.examEndAt && now > new Date(cbtConfig.examEndAt)) {
+                    return `🔒 Closed since ${new Date(cbtConfig.examEndAt).toLocaleString()}`
+                  }
+                  return '🟢 Within scheduled window'
+                })()}
+              </span>
+            </div>
+          </div>
+
           {/* Submissions Leaderboard Table */}
           {loadingCbt ? (
             <div className="py-8 text-center text-xs text-gray-500">Loading Candidate Submissions...</div>
@@ -581,9 +706,11 @@ const AdminDashboard = () => {
             </div>
           )}
         </div>
+        )}
 
-        {/* Contact Messages Section */}
-        <div className="mb-6 bg-white rounded-lg shadow-sm p-6 border border-gray-200">
+        {/* ── MESSAGES TAB ── */}
+        {activeTab === 'messages' && (
+        <div className="bg-white rounded-lg shadow-sm p-4 sm:p-6 border border-gray-200">
           <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-4 pb-4 border-b border-gray-100">
             <div>
               <div className="flex items-center gap-2">
@@ -703,9 +830,13 @@ const AdminDashboard = () => {
             </div>
           )}
         </div>
+        )}
 
+        {/* ── COURSES & CONTENT TAB ── */}
+        {activeTab === 'courses' && (
+        <div className="space-y-6">
         {/* Manage Courses Section */}
-        <div className="mb-6 bg-white rounded-lg shadow-sm p-6">
+        <div className="bg-white rounded-lg shadow-sm p-4 sm:p-6">
           <h2 className="text-xl font-bold mb-4">Manage Courses</h2>
           
           {courses.length === 0 ? (
@@ -810,11 +941,11 @@ const AdminDashboard = () => {
         </div>
 
         {/* Create Course Section - Collapsible */}
-        <div className="mb-6 bg-white rounded-lg shadow-sm">
+        <div className="bg-white rounded-lg shadow-sm">
           <button
             type="button"
             onClick={() => setShowCreateCourse(!showCreateCourse)}
-            className="w-full flex items-center justify-between p-6 text-left hover:bg-gray-50 transition-colors"
+            className="w-full flex items-center justify-between p-4 sm:p-6 text-left hover:bg-gray-50 transition-colors"
           >
             <h2 className="text-xl font-bold">Create New Course</h2>
             <svg
@@ -946,9 +1077,9 @@ const AdminDashboard = () => {
         </div>
 
         {/* Content Management Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6">
           {/* Import YouTube Content */}
-          <div className="bg-white rounded-lg shadow-sm p-6">
+          <div className="bg-white rounded-lg shadow-sm p-4 sm:p-6">
             <div className="flex items-center justify-between mb-4">
               <h2 className="text-xl font-bold">Import YouTube Content</h2>
               <div className="flex bg-gray-100 p-1 rounded-lg text-xs font-semibold">
@@ -1113,7 +1244,7 @@ const AdminDashboard = () => {
           </div>
 
           {/* Upload Material Section */}
-          <div className="bg-white rounded-lg shadow-sm p-6">
+          <div className="bg-white rounded-lg shadow-sm p-4 sm:p-6">
             <h2 className="text-xl font-bold mb-4">Upload Study Material</h2>
             <form onSubmit={handleUploadMaterial} className="space-y-4">
               <div>
@@ -1191,6 +1322,8 @@ const AdminDashboard = () => {
             </form>
           </div>
         </div>
+        </div>
+        )}
       </div>
     </AdminLayout>
   )

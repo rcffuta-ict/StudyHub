@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { useNavigate, Link } from 'react-router-dom'
+import { useNavigate, useLocation, Link } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 import toast from 'react-hot-toast'
 import logo from '../assets/logo.png'
@@ -40,8 +40,15 @@ const Login = () => {
   const [showPassword, setShowPassword] = useState(false)
   const { login, loginAsGuest, googleLogin } = useAuth()
   const navigate = useNavigate()
+  const location = useLocation()
   const [loading, setLoading] = useState(false)
   const [legalModalState, setLegalModalState] = useState({ isOpen: false, type: 'terms' })
+
+  // Carries a shared deep link (e.g. /quizzes/rfua) through login -> signup ->
+  // forgot/reset-password so the user lands back where they meant to go.
+  const redirectState = location.state?.from ? { from: location.state.from } : undefined
+  const redirectTo = location.state?.from?.pathname || '/dashboard'
+  const cameFromRfua = location.state?.from?.pathname === '/quizzes/rfua'
 
   // Google Login and Registration States
   const [showGoogleRegisterModal, setShowGoogleRegisterModal] = useState(false)
@@ -60,7 +67,7 @@ const Login = () => {
       const result = await loginAsGuest(formData.rememberMe)
       if (result.success) {
         toast.success('Continuing as Guest Student')
-        navigate('/dashboard')
+        navigate(redirectTo)
       } else {
         toast.error(result.message || 'Guest login failed')
       }
@@ -108,8 +115,17 @@ const Login = () => {
         if (formData.email.toLowerCase() === adminEmail.toLowerCase()) {
           navigate('/admin/dashboard')
         } else {
-          navigate('/dashboard')
+          navigate(redirectTo)
         }
+      } else if (result.accountNotFound) {
+        toast.error("We couldn't find an account with that email — let's get you registered.", { duration: 5000 })
+        navigate('/signup', {
+          state: {
+            ...redirectState,
+            prefillEmail: formData.email,
+            prefillPassword: formData.password,
+          },
+        })
       } else {
         toast.error(result.message || 'Login failed')
       }
@@ -134,7 +150,7 @@ const Login = () => {
           setShowGoogleRegisterModal(true)
         } else {
           toast.success('Logged in successfully with Google!')
-          navigate('/dashboard')
+          navigate(redirectTo)
         }
       } else {
         toast.error(result.message || 'Google authentication failed')
@@ -169,7 +185,7 @@ const Login = () => {
       if (result.success) {
         toast.success('Profile completed and logged in successfully!')
         setShowGoogleRegisterModal(false)
-        navigate('/dashboard')
+        navigate(redirectTo)
       } else {
         toast.error(result.message || 'Google registration failed')
       }
@@ -270,11 +286,14 @@ const Login = () => {
                   Welcome Back
                 </h1>
                 <p className="text-xs sm:text-sm text-gray-500 font-medium">
-                  Sign in to your StudyHub account to continue.
+                  {cameFromRfua
+                    ? 'Sign in to continue to the RFUA Scholarship Exam.'
+                    : 'Sign in to your StudyHub account to continue.'}
                 </p>
               </div>
-              <Link 
-                to="/signup" 
+              <Link
+                to="/signup"
+                state={redirectState}
                 className="text-xs sm:text-sm font-bold text-[#4B2E83] hover:opacity-80 transition-opacity shrink-0 ml-4 mt-0.5"
               >
                 Create Account
@@ -361,8 +380,9 @@ const Login = () => {
                     />
                     <span className="text-xs font-semibold text-gray-600 group-hover:text-gray-900 transition-colors">Remember Me</span>
                   </label>
-                  <Link 
-                    to="/forgot-password" 
+                  <Link
+                    to="/forgot-password"
+                    state={redirectState}
                     className="text-xs font-bold text-[#4B2E83] hover:opacity-85 transition-opacity"
                   >
                     Forgot Password?

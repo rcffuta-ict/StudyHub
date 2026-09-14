@@ -122,6 +122,7 @@ export const AuthProvider = ({ children }) => {
       return {
         success: false,
         message: error.response?.data?.message || error.message || 'Login failed',
+        accountNotFound: Boolean(error.response?.data?.accountNotFound),
       }
     }
   }

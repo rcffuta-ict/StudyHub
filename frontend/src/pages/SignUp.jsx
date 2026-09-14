@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { useNavigate, Link } from 'react-router-dom'
+import { useNavigate, useLocation, Link } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 import toast from 'react-hot-toast'
 import logo from '../assets/logo.png'
@@ -31,11 +31,20 @@ const GoogleSignUpButton = ({ onSuccess, onError, btnLoading }) => {
 }
 
 const SignUp = () => {
+  const navigate = useNavigate()
+  const location = useLocation()
+
+  // A failed login (no account found) or a shared deep link can hand us a
+  // destination + prefilled credentials so the person doesn't retype anything.
+  const redirectState = location.state?.from ? { from: location.state.from } : undefined
+  const redirectTo = location.state?.from?.pathname || '/dashboard'
+  const cameFromRfua = location.state?.from?.pathname === '/quizzes/rfua'
+
   const [formData, setFormData] = useState({
     name: '',
-    email: '',
-    password: '',
-    confirmPassword: '',
+    email: location.state?.prefillEmail || '',
+    password: location.state?.prefillPassword || '',
+    confirmPassword: location.state?.prefillPassword || '',
     faculty: '',
     department: '',
     level: '',
@@ -43,7 +52,6 @@ const SignUp = () => {
   const [showPassword, setShowPassword] = useState(false)
   const [showConfirmPassword, setShowConfirmPassword] = useState(false)
   const { register, googleLogin } = useAuth()
-  const navigate = useNavigate()
   const [loading, setLoading] = useState(false)
   const [availableDepartments, setAvailableDepartments] = useState([])
 
@@ -119,8 +127,8 @@ const SignUp = () => {
       })
 
       if (result.success) {
-        toast.success('Account created successfully! Check your email to verify your account.')
-        navigate('/login')
+        toast.success('Account created successfully! Welcome to StudyHub.')
+        navigate(redirectTo)
       } else {
         toast.error(result.message || 'Registration failed')
       }
@@ -145,7 +153,7 @@ const SignUp = () => {
           setShowGoogleRegisterModal(true)
         } else {
           toast.success('Logged in successfully with Google!')
-          navigate('/dashboard')
+          navigate(redirectTo)
         }
       } else {
         toast.error(result.message || 'Google authentication failed')
@@ -180,7 +188,7 @@ const SignUp = () => {
       if (result.success) {
         toast.success('Profile completed and logged in successfully!')
         setShowGoogleRegisterModal(false)
-        navigate('/dashboard')
+        navigate(redirectTo)
       } else {
         toast.error(result.message || 'Google registration failed')
       }
@@ -281,11 +289,14 @@ const SignUp = () => {
                   Join StudyHub
                 </h1>
                 <p className="text-xs sm:text-sm text-gray-500 font-medium">
-                  Create an account to start your learning workspace.
+                  {cameFromRfua
+                    ? 'Create an account to continue to the RFUA Scholarship Exam.'
+                    : 'Create an account to start your learning workspace.'}
                 </p>
               </div>
-              <Link 
-                to="/login" 
+              <Link
+                to="/login"
+                state={redirectState}
                 className="text-xs sm:text-sm font-bold text-[#4B2E83] hover:opacity-80 transition-opacity shrink-0 ml-4 mt-0.5"
               >
                 Log In
