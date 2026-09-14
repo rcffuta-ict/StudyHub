@@ -22,6 +22,10 @@ const QuizzesView = ({ direct = false }) => {
 
   const is100LUser = Boolean(user && !user.isGuest && String(user.level || '').toLowerCase().includes('100'))
 
+  // Kept in sync with backend/src/controllers/cbtController.js UNLIMITED_RETAKE_EMAILS —
+  // this account can start/retake the exam regardless of the admin lock or schedule window.
+  const isUnlimitedAccessUser = String(user?.email || '').toLowerCase() === 'ayanogift@gmail.com'
+
   // 1. Core CBT Scholarship States (For 100L)
   const [loading, setLoading] = useState(true)
   const [eligible, setEligible] = useState(false)
@@ -319,7 +323,7 @@ const QuizzesView = ({ direct = false }) => {
   const examEnd = config.examEndAt ? new Date(config.examEndAt) : null
   const windowNotStarted = Boolean(examStart && new Date() < examStart)
   const windowEnded = Boolean(examEnd && new Date() > examEnd)
-  const examLocked = !config.isExamActive || windowNotStarted || windowEnded
+  const examLocked = !isUnlimitedAccessUser && (!config.isExamActive || windowNotStarted || windowEnded)
   const formatWindowDate = (d) => d?.toLocaleString([], { dateStyle: 'medium', timeStyle: 'short' })
 
   const getSubjectList = () => {
@@ -598,6 +602,12 @@ const QuizzesView = ({ direct = false }) => {
                     </div>
 
                     {/* Submit Action */}
+                    {isUnlimitedAccessUser && (!config.isExamActive || windowNotStarted || windowEnded) && (
+                      <p className="text-center text-xs text-purple-700 font-semibold bg-purple-50 py-2 rounded-xl border border-purple-200/80 flex items-center justify-center gap-1.5">
+                        <Icon name="lock_open" className="text-sm" />
+                        Admin lock/schedule bypassed — unlimited access for this account.
+                      </p>
+                    )}
                     {examLocked ? (
                       <div className="space-y-2">
                         <button
