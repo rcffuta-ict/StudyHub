@@ -2,7 +2,7 @@ import CbtQuestion from '../models/CbtQuestion.js'
 import CbtSubmission from '../models/CbtSubmission.js'
 import CbtSetting from '../models/CbtSetting.js'
 
-// Helper: Get or initialize global config
+// Helper: Get or initialize global config (defaults to locked until admin enables)
 const getGlobalConfig = async () => {
   let config = await CbtSetting.findOne({ key: 'global_cbt_config' })
   if (!config) {
@@ -12,11 +12,45 @@ const getGlobalConfig = async () => {
       durationMinutes: 45,
       isExamActive: false,
     })
-  } else {
-    config.isExamActive = false
-    await config.save()
   }
   return config
+}
+
+// Helper: Normalize + validate matric number (e.g. EEE/22/1001)
+const normalizeMatric = (matric) => {
+  return String(matric || '').trim().toUpperCase().replace(/\s+/g, '')
+}
+
+const MATRIC_REGEX = /^[A-Z]{2,4}\/\d{2}\/\d{3,4}$/
+
+const isValidMatric = (matric) => MATRIC_REGEX.test(matric)
+
+// Accounts allowed to retake the CBT exam as many times as they like, ignoring
+// the one-attempt lock, the Exam Active toggle, and the scheduled exam window.
+const UNLIMITED_RETAKE_EMAILS = ['ayanogift@gmail.com']
+const hasUnlimitedAccess = (user) => UNLIMITED_RETAKE_EMAILS.includes(String(user?.email || '').toLowerCase())
+
+// Helper: Determine whether "now" falls within the admin-scheduled exam window.
+// Either bound may be unset, in which case that side is treated as open.
+const getWindowState = (config) => {
+  const now = new Date()
+  if (config.examStartAt && now < new Date(config.examStartAt)) {
+    return { withinWindow: false, reason: 'not_started' }
+  }
+  if (config.examEndAt && now > new Date(config.examEndAt)) {
+    return { withinWindow: false, reason: 'ended' }
+  }
+  return { withinWindow: true, reason: null }
+}
+
+const windowStateMessage = (windowState, config) => {
+  if (windowState.reason === 'not_started') {
+    return `The scholarship examination has not opened yet. It opens on ${new Date(config.examStartAt).toLocaleString()}.`
+  }
+  if (windowState.reason === 'ended') {
+    return `The scholarship examination window has closed. It ended on ${new Date(config.examEndAt).toLocaleString()}.`
+  }
+  return null
 }
 
 // @desc    Check student eligibility & session status
@@ -49,6 +83,7 @@ export const getStatus = async (req, res) => {
     }
 
     const config = await getGlobalConfig()
+    const windowState = getWindowState(config)
 
     // 3. Check existing submission
     const existingSubmission = await CbtSubmission.findOne({ userId: user._id })
@@ -62,17 +97,24 @@ export const getStatus = async (req, res) => {
           activeSet: config.activeSet,
           durationMinutes: config.durationMinutes,
           isExamActive: config.isExamActive,
+          examStartAt: config.examStartAt,
+          examEndAt: config.examEndAt,
+          withinWindow: windowState.withinWindow,
+          windowMessage: windowStateMessage(windowState, config),
         },
       })
     }
 
     // If submission is completed
     if (existingSubmission.status === 'completed') {
+      const reviewQuestions = await getReviewQuestions(existingSubmission)
       return res.json({
         eligible: false,
         alreadyTaken: true,
         reason: 'completed',
         submission: existingSubmission,
+        reviewQuestions,
+        canRetake: hasUnlimitedAccess(user),
         config: {
           activeSet: config.activeSet,
           durationMinutes: config.durationMinutes,
@@ -89,11 +131,14 @@ export const getStatus = async (req, res) => {
       // Auto-finalize expired submission
       await scoreSubmission(existingSubmission)
       const finalized = await CbtSubmission.findById(existingSubmission._id)
+      const reviewQuestions = await getReviewQuestions(finalized)
       return res.json({
         eligible: false,
         alreadyTaken: true,
         reason: 'expired',
         submission: finalized,
+        reviewQuestions,
+        canRetake: hasUnlimitedAccess(user),
         config: {
           activeSet: config.activeSet,
           durationMinutes: config.durationMinutes,
@@ -142,15 +187,57 @@ export const startExam = async (req, res) => {
       return res.status(400).json({ message: 'Matriculation number and subject combination are required.' })
     }
 
+    const cleanMatric = normalizeMatric(matricNumber)
+    if (!isValidMatric(cleanMatric)) {
+      return res.status(400).json({
+        message: 'Enter a valid matriculation number (e.g., EEE/22/1001).',
+      })
+    }
+
+    if (!['MPC', 'PCB'].includes(combination)) {
+      return res.status(400).json({ message: 'Invalid subject combination. Choose MPC or PCB.' })
+    }
+
     const config = await getGlobalConfig()
-    if (!config.isExamActive) {
+    const bypassAdminGates = hasUnlimitedAccess(user)
+
+    if (!bypassAdminGates && !config.isExamActive) {
       return res.status(400).json({ message: 'The scholarship examination is currently paused or inactive.' })
     }
 
-    let submission = await CbtSubmission.findOne({ userId: user._id })
+    // Only gate the START of a fresh attempt on the schedule window — a student
+    // already mid-exam when the window ends should still be able to resume/submit.
+    const existingSubmission = await CbtSubmission.findOne({ userId: user._id })
+    if (!existingSubmission && !bypassAdminGates) {
+      const windowState = getWindowState(config)
+      if (!windowState.withinWindow) {
+        return res.status(400).json({ message: windowStateMessage(windowState, config) })
+      }
+    }
+
+    let submission = existingSubmission
 
     if (submission && submission.status === 'completed') {
-      return res.status(400).json({ message: 'You have already completed your examination attempt.' })
+      if (!bypassAdminGates) {
+        return res.status(400).json({ message: 'You have already completed your examination attempt.' })
+      }
+      // Unlimited-access account: clear the previous attempt and start fresh.
+      await CbtSubmission.deleteOne({ _id: submission._id })
+      submission = null
+    }
+
+    // Server-side one-attempt enforcement: a matric number is a unique candidate
+    // identifier and cannot be used for a second, separate official attempt.
+    if (!submission) {
+      const matricTaken = await CbtSubmission.findOne({
+        matricNumber: cleanMatric,
+        status: { $in: ['completed', 'expired'] },
+      })
+      if (matricTaken && String(matricTaken.userId) !== String(user._id)) {
+        return res.status(400).json({
+          message: 'This matriculation number has already completed the exam for another account.',
+        })
+      }
     }
 
     const userSurname = surname || user.fullName?.split(' ').slice(-1)[0] || 'Student'
@@ -175,7 +262,7 @@ export const startExam = async (req, res) => {
         email: user.email,
         department: user.department || 'General Science',
         faculty: user.faculty || 'Science & Tech',
-        matricNumber: matricNumber.toUpperCase().trim(),
+        matricNumber: cleanMatric,
         combination,
         questionSet: config.activeSet,
         startedAt,
@@ -279,10 +366,15 @@ const scoreSubmission = async (submission, finalAnswers = null) => {
   })
 
   let correctCount = 0
+  const subjectCounts = {}
   questions.forEach((q) => {
+    const subj = q.subject
+    if (!subjectCounts[subj]) subjectCounts[subj] = { correct: 0, total: 0 }
+    subjectCounts[subj].total++
     const studentChoice = answersMap.get(String(q._id)) || answersMap.get(q._id)
     if (studentChoice && studentChoice.toUpperCase() === q.correct_option.toUpperCase()) {
       correctCount++
+      subjectCounts[subj].correct++
     }
   })
 
@@ -300,9 +392,24 @@ const scoreSubmission = async (submission, finalAnswers = null) => {
   submission.percentage = percentage
   submission.timeSpentSeconds = timeSpentSeconds
   submission.answers = Object.fromEntries(answersMap)
+  submission.subjectScores = subjectCounts
 
   await submission.save()
   return submission
+}
+
+// Helper: Fetch full question set (incl. correct_option & explanation) for a
+// submission's combination/question set, for post-exam review.
+const getReviewQuestions = async (submission) => {
+  const subjectsMap = {
+    MPC: ['Mathematics', 'Physics', 'Chemistry'],
+    PCB: ['Physics', 'Chemistry', 'Biology'],
+  }
+  const chosenSubjects = subjectsMap[submission.combination] || subjectsMap.MPC
+  return CbtQuestion.find({
+    subject: { $in: chosenSubjects },
+    question_set: submission.questionSet,
+  }).sort({ subject: 1, subsection_id: 1, _id: 1 })
 }
 
 // @desc    Submit final CBT Exam
@@ -325,16 +432,7 @@ export const submitExam = async (req, res) => {
 
     await scoreSubmission(submission, answers)
 
-    // Fetch review questions including explanations
-    const subjectsMap = {
-      MPC: ['Mathematics', 'Physics', 'Chemistry'],
-      PCB: ['Physics', 'Chemistry', 'Biology'],
-    }
-    const chosenSubjects = subjectsMap[submission.combination] || subjectsMap.MPC
-    const reviewQuestions = await CbtQuestion.find({
-      subject: { $in: chosenSubjects },
-      question_set: submission.questionSet,
-    }).sort({ subject: 1, subsection_id: 1, _id: 1 })
+    const reviewQuestions = await getReviewQuestions(submission)
 
     res.json({
       success: true,
@@ -375,7 +473,7 @@ export const getLeaderboard = async (req, res) => {
 // @access  Private/Admin
 export const adminUpdateSettings = async (req, res) => {
   try {
-    const { activeSet, durationMinutes, isExamActive } = req.body
+    const { activeSet, durationMinutes, isExamActive, examStartAt, examEndAt } = req.body
 
     const config = await getGlobalConfig()
 
@@ -387,6 +485,25 @@ export const adminUpdateSettings = async (req, res) => {
     }
     if (typeof isExamActive === 'boolean') {
       config.isExamActive = isExamActive
+    }
+
+    // Scheduled exam window (both optional; pass null/'' to clear a bound)
+    if (examStartAt !== undefined) {
+      const parsed = examStartAt ? new Date(examStartAt) : null
+      if (examStartAt && Number.isNaN(parsed.getTime())) {
+        return res.status(400).json({ message: 'Invalid exam start date/time.' })
+      }
+      config.examStartAt = parsed
+    }
+    if (examEndAt !== undefined) {
+      const parsed = examEndAt ? new Date(examEndAt) : null
+      if (examEndAt && Number.isNaN(parsed.getTime())) {
+        return res.status(400).json({ message: 'Invalid exam end date/time.' })
+      }
+      config.examEndAt = parsed
+    }
+    if (config.examStartAt && config.examEndAt && config.examStartAt >= config.examEndAt) {
+      return res.status(400).json({ message: 'Exam start time must be before the end time.' })
     }
 
     await config.save()

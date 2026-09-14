@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { useNavigate, Link } from 'react-router-dom'
+import { useNavigate, useLocation, Link } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 import toast from 'react-hot-toast'
 import logo from '../assets/logo.png'
@@ -7,6 +7,29 @@ import authBg from '../assets/authBg.png'
 import LegalModal from '../components/LegalModal'
 import { useGoogleLogin } from '@react-oauth/google'
 import { faculties, levels } from '../utils/faculties'
+
+const hasGoogleOAuth = Boolean(import.meta.env.VITE_GOOGLE_CLIENT_ID)
+
+// Extracted component — useGoogleLogin hook only called when mounted (inside GoogleOAuthProvider)
+const GoogleLoginButton = ({ onSuccess, onError, btnLoading }) => {
+  const handleGoogleLogin = useGoogleLogin({ onSuccess, onError })
+  return (
+    <button
+      type="button"
+      onClick={() => handleGoogleLogin()}
+      disabled={btnLoading}
+      className="w-full py-2.5 sm:py-3 bg-white border border-gray-200 text-gray-700 rounded-xl font-bold hover:bg-gray-50 hover:-translate-y-0.5 active:translate-y-0 disabled:opacity-60 disabled:cursor-not-allowed transition-all duration-200 flex justify-center items-center gap-2.5 shadow-sm text-sm"
+    >
+      <svg className="w-4 h-4 sm:w-5 sm:h-5" viewBox="0 0 24 24" fill="none">
+        <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"/>
+        <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/>
+        <path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.06H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.94l3.66-2.85z" fill="#FBBC05"/>
+        <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.85c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335"/>
+      </svg>
+      <span>Continue with Google</span>
+    </button>
+  )
+}
 
 const Login = () => {
   const [formData, setFormData] = useState({
@@ -17,8 +40,15 @@ const Login = () => {
   const [showPassword, setShowPassword] = useState(false)
   const { login, loginAsGuest, googleLogin } = useAuth()
   const navigate = useNavigate()
+  const location = useLocation()
   const [loading, setLoading] = useState(false)
   const [legalModalState, setLegalModalState] = useState({ isOpen: false, type: 'terms' })
+
+  // Carries a shared deep link (e.g. /quizzes/rfua) through login -> signup ->
+  // forgot/reset-password so the user lands back where they meant to go.
+  const redirectState = location.state?.from ? { from: location.state.from } : undefined
+  const redirectTo = location.state?.from?.pathname || '/dashboard'
+  const cameFromRfua = location.state?.from?.pathname === '/quizzes/rfua'
 
   // Google Login and Registration States
   const [showGoogleRegisterModal, setShowGoogleRegisterModal] = useState(false)
@@ -37,7 +67,7 @@ const Login = () => {
       const result = await loginAsGuest(formData.rememberMe)
       if (result.success) {
         toast.success('Continuing as Guest Student')
-        navigate('/dashboard')
+        navigate(redirectTo)
       } else {
         toast.error(result.message || 'Guest login failed')
       }
@@ -85,8 +115,17 @@ const Login = () => {
         if (formData.email.toLowerCase() === adminEmail.toLowerCase()) {
           navigate('/admin/dashboard')
         } else {
-          navigate('/dashboard')
+          navigate(redirectTo)
         }
+      } else if (result.accountNotFound) {
+        toast.error("We couldn't find an account with that email — let's get you registered.", { duration: 5000 })
+        navigate('/signup', {
+          state: {
+            ...redirectState,
+            prefillEmail: formData.email,
+            prefillPassword: formData.password,
+          },
+        })
       } else {
         toast.error(result.message || 'Login failed')
       }
@@ -97,37 +136,35 @@ const Login = () => {
     }
   }
 
-  // Google OAuth Login Hook (Option B: Access Token Flow)
-  const handleGoogleLogin = useGoogleLogin({
-    onSuccess: async (tokenResponse) => {
-      setLoading(true)
-      try {
-        const token = tokenResponse.access_token
-        const result = await googleLogin({ token })
+  // Google OAuth callbacks (used by the extracted GoogleLoginButton component)
+  const handleGoogleSuccess = async (tokenResponse) => {
+    setLoading(true)
+    try {
+      const token = tokenResponse.access_token
+      const result = await googleLogin({ token })
 
-        if (result.success) {
-          if (result.needRegistrationInfo) {
-            // Open complete profile modal
-            setTempGoogleToken(token)
-            setGoogleUserEmail(result.email)
-            setShowGoogleRegisterModal(true)
-          } else {
-            toast.success('Logged in successfully with Google!')
-            navigate('/dashboard')
-          }
+      if (result.success) {
+        if (result.needRegistrationInfo) {
+          setTempGoogleToken(token)
+          setGoogleUserEmail(result.email)
+          setShowGoogleRegisterModal(true)
         } else {
-          toast.error(result.message || 'Google authentication failed')
+          toast.success('Logged in successfully with Google!')
+          navigate(redirectTo)
         }
-      } catch (error) {
-        toast.error('An error occurred during Google sign-in.')
-      } finally {
-        setLoading(false)
+      } else {
+        toast.error(result.message || 'Google authentication failed')
       }
-    },
-    onError: () => {
-      toast.error('Google Sign In was unsuccessful. Try again.')
+    } catch (error) {
+      toast.error('An error occurred during Google sign-in.')
+    } finally {
+      setLoading(false)
     }
-  })
+  }
+
+  const handleGoogleError = () => {
+    toast.error('Google Sign In was unsuccessful. Try again.')
+  }
 
   const handleGoogleRegisterSubmit = async (e) => {
     e.preventDefault()
@@ -148,7 +185,7 @@ const Login = () => {
       if (result.success) {
         toast.success('Profile completed and logged in successfully!')
         setShowGoogleRegisterModal(false)
-        navigate('/dashboard')
+        navigate(redirectTo)
       } else {
         toast.error(result.message || 'Google registration failed')
       }
@@ -249,11 +286,14 @@ const Login = () => {
                   Welcome Back
                 </h1>
                 <p className="text-xs sm:text-sm text-gray-500 font-medium">
-                  Sign in to your StudyHub account to continue.
+                  {cameFromRfua
+                    ? 'Sign in to continue to the RFUA Scholarship Exam.'
+                    : 'Sign in to your StudyHub account to continue.'}
                 </p>
               </div>
-              <Link 
-                to="/signup" 
+              <Link
+                to="/signup"
+                state={redirectState}
                 className="text-xs sm:text-sm font-bold text-[#4B2E83] hover:opacity-80 transition-opacity shrink-0 ml-4 mt-0.5"
               >
                 Create Account
@@ -340,8 +380,9 @@ const Login = () => {
                     />
                     <span className="text-xs font-semibold text-gray-600 group-hover:text-gray-900 transition-colors">Remember Me</span>
                   </label>
-                  <Link 
-                    to="/forgot-password" 
+                  <Link
+                    to="/forgot-password"
+                    state={redirectState}
                     className="text-xs font-bold text-[#4B2E83] hover:opacity-85 transition-opacity"
                   >
                     Forgot Password?
@@ -389,21 +430,14 @@ const Login = () => {
                 <div className="flex-grow border-t border-gray-150" />
               </div>
 
-              {/* Custom Google Login Button */}
-              <button
-                type="button"
-                onClick={() => handleGoogleLogin()}
-                disabled={loading}
-                className="w-full py-2.5 sm:py-3 bg-white border border-gray-200 text-gray-700 rounded-xl font-bold hover:bg-gray-50 hover:-translate-y-0.5 active:translate-y-0 disabled:opacity-60 disabled:cursor-not-allowed transition-all duration-200 flex justify-center items-center gap-2.5 shadow-sm text-sm"
-              >
-                <svg className="w-4 h-4 sm:w-5 sm:h-5" viewBox="0 0 24 24" fill="none">
-                  <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"/>
-                  <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/>
-                  <path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.06H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.94l3.66-2.85z" fill="#FBBC05"/>
-                  <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.85c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335"/>
-                </svg>
-                <span>Continue with Google</span>
-              </button>
+              {/* Google Login Button — only mounted when GoogleOAuthProvider is present */}
+              {hasGoogleOAuth && (
+                <GoogleLoginButton
+                  onSuccess={handleGoogleSuccess}
+                  onError={handleGoogleError}
+                  btnLoading={loading}
+                />
+              )}
             </div>
 
             {/* Terms */}

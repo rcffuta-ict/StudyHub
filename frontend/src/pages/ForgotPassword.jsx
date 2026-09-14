@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { Link, useNavigate } from 'react-router-dom'
+import { Link, useNavigate, useLocation } from 'react-router-dom'
 import toast from 'react-hot-toast'
 import logo from '../assets/logo.png'
 import authBg from '../assets/authBg.png'
@@ -9,6 +9,8 @@ const ForgotPassword = () => {
   const [email, setEmail] = useState('')
   const [loading, setLoading] = useState(false)
   const navigate = useNavigate()
+  const location = useLocation()
+  const redirectState = location.state?.from ? { from: location.state.from } : undefined
 
   const handleSubmit = async (e) => {
     e.preventDefault()
@@ -18,7 +20,7 @@ const ForgotPassword = () => {
       const response = await api.post('/auth/forgot-password', { email })
       if (response.data.success) {
         toast.success('OTP verification code sent to your email!')
-        navigate('/enter-otp', { state: { email } })
+        navigate('/enter-otp', { state: { email, ...redirectState } })
       }
     } catch (error) {
       toast.error(error.response?.data?.message || 'Failed to send OTP. Please try again.')
@@ -101,7 +103,7 @@ const ForgotPassword = () => {
                   <img src={logo} alt="StudyHub" className="h-8 w-auto" />
                   <span className="text-lg font-bold text-[#4B2E83]">StudyHub</span>
                 </Link>
-                <Link to="/login" className="text-xs font-bold text-[#4B2E83]">
+                <Link to="/login" state={redirectState} className="text-xs font-bold text-[#4B2E83]">
                   Log In
                 </Link>
               </div>
@@ -161,6 +163,7 @@ const ForgotPassword = () => {
             <div className="mt-6 pt-4 border-t border-gray-100 text-center">
               <Link
                 to="/login"
+                state={redirectState}
                 className="inline-flex items-center gap-2 text-xs font-bold text-[#4B2E83] hover:underline"
               >
                 <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">

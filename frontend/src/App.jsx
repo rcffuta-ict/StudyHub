@@ -1,4 +1,4 @@
-import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom'
+import { BrowserRouter as Router, Routes, Route, Navigate, useLocation } from 'react-router-dom'
 import { Toaster } from 'react-hot-toast'
 import { AuthProvider, useAuth } from './context/AuthContext'
 import LoadingSpinner from './components/LoadingSpinner'
@@ -9,6 +9,7 @@ import Dashboard from './pages/Dashboard'
 import Courses from './pages/Courses'
 import CourseDetail from './pages/CourseDetail'
 import Quizzes from './pages/Quizzes'
+import QuizzesRfua from './pages/QuizzesRfua'
 import Library from './pages/Library'
 import CGPACalculator from './pages/CGPACalculator'
 import Motivation from './pages/Motivation'
@@ -25,8 +26,9 @@ import Notifications from './pages/Notifications'
 // Protected Route Component
 const ProtectedRoute = ({ children }) => {
   const { user, loading } = useAuth()
+  const location = useLocation()
   const adminEmail = import.meta.env.VITE_ADMIN_EMAIL || ''
-  
+
   if (loading) {
     return (
       <div className="flex items-center justify-center min-h-screen bg-[#faf9f6]">
@@ -34,21 +36,24 @@ const ProtectedRoute = ({ children }) => {
       </div>
     )
   }
-  
+
   if (user) {
     if (user.email?.toLowerCase() === adminEmail.toLowerCase()) {
       return <Navigate to="/admin/dashboard" />
     }
     return children
   }
-  
-  return <Navigate to="/login" />
+
+  // Preserve the originally-requested page (e.g. a shared /quizzes/rfua link) so
+  // Login/SignUp/password-reset can send the user straight back here afterwards.
+  return <Navigate to="/login" state={{ from: location }} replace />
 }
 
 // Public Route Component (redirects to dashboard if already logged in)
 const PublicRoute = ({ children }) => {
   const { user, loading } = useAuth()
-  
+  const location = useLocation()
+
   if (loading) {
     return (
       <div className="flex items-center justify-center min-h-screen bg-[#faf9f6]">
@@ -56,8 +61,8 @@ const PublicRoute = ({ children }) => {
       </div>
     )
   }
-  
-  return user ? <Navigate to="/dashboard" /> : children
+
+  return user ? <Navigate to={location.state?.from?.pathname || '/dashboard'} /> : children
 }
 
 // Admin Route Component
@@ -107,10 +112,8 @@ import { GoogleOAuthProvider } from '@react-oauth/google'
 
 const googleClientId = import.meta.env.VITE_GOOGLE_CLIENT_ID || ''
 
-function App() {
+function AppContent() {
   return (
-    <GoogleOAuthProvider clientId={googleClientId}>
-      <AuthProvider>
       <Router>
         <div className="w-full min-h-screen">
           <Toaster position="top-right" />
@@ -164,13 +167,21 @@ function App() {
                 </ProtectedRoute>
               } 
             />
-            <Route 
-              path="/quizzes" 
+            <Route
+              path="/quizzes"
               element={
                 <ProtectedRoute>
                   <Quizzes />
                 </ProtectedRoute>
-              } 
+              }
+            />
+            <Route
+              path="/quizzes/rfua"
+              element={
+                <ProtectedRoute>
+                  <QuizzesRfua />
+                </ProtectedRoute>
+              }
             />
             <Route 
               path="/library" 
@@ -236,9 +247,21 @@ function App() {
           </Routes>
         </div>
       </Router>
-    </AuthProvider>
-    </GoogleOAuthProvider>
   )
+}
+
+function App() {
+  const content = <AppContent />
+
+  if (googleClientId) {
+    return (
+      <GoogleOAuthProvider clientId={googleClientId}>
+        <AuthProvider>{content}</AuthProvider>
+      </GoogleOAuthProvider>
+    )
+  }
+
+  return <AuthProvider>{content}</AuthProvider>
 }
 
 export default App
