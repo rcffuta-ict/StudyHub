@@ -55,6 +55,7 @@ const QuizzesView = ({ direct = false }) => {
   const [timeLeft, setTimeLeft] = useState(0)
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [showSubmitModal, setShowSubmitModal] = useState(false)
+  const [comingSoon, setComingSoon] = useState(false)
 
   // 4. Results & Review States
   const [reviewQuestions, setReviewQuestions] = useState([])
@@ -193,9 +194,16 @@ const QuizzesView = ({ direct = false }) => {
     }
   }
 
-  // Start fresh CBT exam session
+  // Start fresh CBT exam session. When the admin has the exam paused (via the
+  // Scholarship Exam controls in the admin dashboard), launching is blocked and
+  // the "Coming Soon" notice is shown instead.
   const handleStartExam = async (e) => {
     e.preventDefault()
+
+    if (examLocked) {
+      setComingSoon(true)
+      return
+    }
 
     if (!matricTouched || !isMatricValid) {
       return toast.error('Please enter a valid Matriculation Number (e.g., EEE/22/1001) to begin.')
@@ -447,7 +455,7 @@ const QuizzesView = ({ direct = false }) => {
                       </div>
                       <button
                         type="button"
-                        onClick={() => setEnrolled(true)}
+                        onClick={() => { setEnrolled(true); setComingSoon(false) }}
                         className="px-8 py-3.5 bg-purple-700 hover:bg-purple-800 text-white font-extrabold rounded-2xl shadow-lg shadow-purple-700/25 hover:-translate-y-0.5 active:translate-y-0 transition-all flex items-center gap-2 text-sm"
                       >
                         <Icon name="person_add" className="text-lg" />
@@ -463,7 +471,7 @@ const QuizzesView = ({ direct = false }) => {
                       </div>
                       <button
                         type="button"
-                        onClick={() => setEnrolled(false)}
+                        onClick={() => { setEnrolled(false); setComingSoon(false) }}
                         className="text-xs font-bold text-purple-700 hover:text-purple-900 bg-purple-50 hover:bg-purple-100 px-3 py-1.5 rounded-lg transition-colors shrink-0 flex items-center gap-1"
                       >
                         <Icon name="chevron_left" className="text-base" />
@@ -608,41 +616,26 @@ const QuizzesView = ({ direct = false }) => {
                         Admin lock/schedule bypassed — unlimited access for this account.
                       </p>
                     )}
-                    {examLocked ? (
-                      <div className="space-y-2">
-                        <button
-                          type="button"
-                          disabled
-                          className="w-full py-4 bg-gray-200 text-gray-400 font-extrabold rounded-2xl cursor-not-allowed flex items-center justify-center gap-2 text-base shadow-none"
-                        >
-                          <Icon name="lock" className="text-lg text-gray-400" />
-                          <span>
-                            {windowNotStarted ? 'Examination Opens Soon' : windowEnded ? 'Examination Window Closed' : 'Examination Currently Locked'}
-                          </span>
-                        </button>
-                        <p className="text-center text-xs text-amber-700 font-semibold bg-amber-50 py-2 rounded-xl border border-amber-200/80 flex items-center justify-center gap-1.5">
-                          <Icon name="lock" className="text-sm" />
-                          {windowNotStarted
-                            ? `This exam opens on ${formatWindowDate(examStart)}. Please check back then.`
-                            : windowEnded
-                              ? `This examination window closed on ${formatWindowDate(examEnd)}.`
-                              : 'The 100L Scholarship Examination is currently locked by the administrator. Please check back soon!'}
-                        </p>
-                      </div>
-                    ) : (
+                    <div className="space-y-3">
                       <button
                         type="submit"
-                        disabled={loading || !matricTouched}
-                        className={`w-full py-4 text-white font-extrabold rounded-2xl transition-all flex items-center justify-center gap-2 text-base ${
-                          loading || !matricTouched
-                            ? 'bg-gray-300 text-gray-500 cursor-not-allowed shadow-none'
-                            : 'bg-purple-700 hover:bg-purple-800 shadow-lg shadow-purple-700/25 hover:-translate-y-0.5 active:translate-y-0'
-                        }`}
+                        disabled={loading}
+                        className="w-full py-4 text-white font-extrabold rounded-2xl transition-all flex items-center justify-center gap-2 text-base bg-purple-700 hover:bg-purple-800 shadow-lg shadow-purple-700/25 hover:-translate-y-0.5 active:translate-y-0 disabled:opacity-70 disabled:cursor-not-allowed"
                       >
                         <span>{!matricTouched ? 'Enter a valid Matriculation Number to Start' : 'Launch Official Scholarship Examination'}</span>
                         <Icon name="arrow_forward" className="text-lg" />
                       </button>
-                    )}
+                      {comingSoon && (
+                        <p className="text-center text-xs font-bold text-purple-700 bg-purple-50 py-2.5 rounded-xl border border-purple-200/80 flex items-center justify-center gap-1.5">
+                          <Icon name="hourglass_top" className="text-sm" />
+                          {windowNotStarted
+                            ? `Coming Soon — This exam opens on ${formatWindowDate(examStart)}. Please check back then.`
+                            : windowEnded
+                              ? 'Coming Soon — This examination window has closed.'
+                              : 'Coming Soon — The scholarship examination is not available yet. Please check back later.'}
+                        </p>
+                      )}
+                    </div>
                   </form>
                   </div>
                   )}
